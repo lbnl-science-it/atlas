@@ -18,6 +18,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 #ARG TERM=vt100
 ARG TERM=dumb
 ARG TZ=PST8PDT 
+#https://no-color.org/
+ARG NO_COLOR=1
 
 #ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
 
@@ -26,7 +28,8 @@ RUN echo  ''  ;\
     echo "begining docker build process at " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
     date | tee -a       _TOP_DIR_OF_CONTAINER_ ;\
     echo "installing packages via apt"       | tee -a _TOP_DIR_OF_CONTAINER_  ;\
-    export TERM=dumb  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
     apt-get update ;\
     # ubuntu:   # procps provides uptime cmd
     apt-get -y --quiet install git file wget gzip bash less vim procps ;\
@@ -233,25 +236,34 @@ RUN echo ''  ;\
     Rscript --quiet --no-readline --slave -e 'install.packages("tidycensus",     repos = "http://cran.us.r-project.org")'    ;\
     Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;\
     # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
-    Rscript --quiet --no-readline --slave -e 'install.packages("pacman" )'       # provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, seems in R 4.0.3 now ;\
-    Rscript --quiet --no-readline --slave -e 'p_load(utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse)' ;\
-    Rscript --quiet --no-readline --slave -e 'p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager )' ;\
-    Rscript --quiet --no-readline --slave -e 'p_load( ggplot2, scales )' ;\
-    Rscript --quiet --no-readline --slave -e 'p_load( snow, foreach, parallel, doParallel, tictoc )' ;\
+    # pacman provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, seems in R 4.0.3 now ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages( "pacman" )'       ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( snow, foreach, parallel, doParallel, tictoc ) }' ;\
     #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
+    #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;\
 
-    # more pacman pkg needed ++
     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.5.txt   ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee /R_library_list.out.5.a.txt  ;\
     echo "Done installing packages cran packages - part 5" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
     date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
-    echo "Dockerfile" | tee  _CONTAINER_tin6150_r4eta_  ;\
+    echo "Dockerfile" | tee  _CONTAINER_lbnl-science-it_atlas_  ;\
+    cd /     ;\
+    # tmp for test with Ling's tmp code
+    mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
+    mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    pwd  ;\
     echo ""
 
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
-  && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_  \
-  && echo  "Dockerfile 2021.0917.1753 foreach doSNOW"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
+  && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.0918.1435 foreach doSNOW lib-pacman"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -269,5 +281,4 @@ ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#sett
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
 ENTRYPOINT [ "Rscript" ]
 # if no defined ENTRYPOINT, default to bash inside the container
-# docker run  -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME:/tmp/home  --user=$(id -u):$(id -g) --entrypoint rstudio tin6150/r4eta
 # careful not to cover /home/username (for this container)

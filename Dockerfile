@@ -29,8 +29,8 @@ RUN echo  ''  ;\
     export TERM=dumb  ;\
     apt-get update ;\
     # ubuntu:   # procps provides uptime cmd
-    apt-get -y --quiet install git file wget gzip bash tcsh zsh less vim bc tmux screen xterm procps ;\
-    apt-get -y --quiet install netcdf-bin libnetcdf-c++4 libnetcdf-c++4-1 libnetcdf-c++4-dev libnetcdf-dev cdftools nco ncview r-cran-ncdf4  units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
+    apt-get -y --quiet install git file wget gzip bash less vim procps ;\
+    apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
     apt-get -y --quiet install openjdk-14-jre-headless   ;\ 
     # gdal cran install fails, cuz no longer libgdal26, but now libgdal28
     # apt-file search gdal-config
@@ -44,13 +44,6 @@ RUN echo  ''  ;\
     R CMD javareconf  ;\
     # debian calls it libnode-dev (ubuntu call it libv8-dev?)
     apt-get -y --quiet install libnode-dev libv8-dev ;\
-    echo '==================================================================' ;\
-    echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
-    apt-get -y --quiet install git-all  ;\
-    test -d /opt/gitrepo  || mkdir -p /opt/gitrepo        ;\
-    cd /opt/gitrepo       ;\
-    test -d /opt/gitrepo/r4eta  || git clone https://github.com/tin6150/r4eta.git  ;\
-    cd /opt/gitrepo/r4eta &&  git pull             ;\
     cd /     ;\
     echo ""  ;\
     echo '==================================================================' ;\
@@ -59,40 +52,30 @@ RUN echo  ''  ;\
     echo '==================================================================' ;\
     #-- rstudio dont seems to exist in Debian bullseye/sid :/
     #-- apt-get --quiet install rstudio  ;\
-    apt-get -y --quiet install r-cran-rstudioapi libqt5gui5 libqt5network5  libqt5webenginewidgets5 qterminal net-tools ;\
+    #xx apt-get -y --quiet install r-cran-rstudioapi libqt5gui5 libqt5network5  libqt5webenginewidgets5 qterminal net-tools ;\
     apt-get -y --quiet install apt-file ;\
     apt-file update ;\
     mkdir -p Downloads &&  cd Downloads ;\
-    wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
-    apt-get -y --quiet install ./rstudio4deb10.deb     ;\
+    #xx wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
+    #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;\
     cd /    ;\
     echo ""  
-
-COPY . /r4eta
 
 RUN echo ''  ;\
-    cd   /   ;\
     echo '==================================================================' ;\
-    echo '==================================================================' ;\
-    echo "installing jupyter notebook server" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
-    date | tee -a      _TOP_DIR_OF_CONTAINER_                                 ;\
-    echo '==================================================================' ;\
-    echo '==================================================================' ;\
-    echo '' ;\
-    export TERM=dumb  ;\
-    # pre-req for anaconda (jupyter notebook server)
-    apt-get -y --quiet install apt-get install libgl1-mesa-glx libegl1-mesa libxrandr2 libxrandr2 libxss1 libxcursor    1 libxcomposite1 libasound2 libxi6 libxtst6 ;\
-    bash -x ./r4eta/install_jupyter.sh 2>&1   | tee install_jupyter.log ;\
-    cp ./r4eta/hello_world.R ./r4eta/hello_world_jupyter_R.ipynb / ;\
-    # IRkernel, assume Jupyter Notebook already installed &&
-    # add kernel spec to Jupyter, depends on jupyter already installed
-    ## this method didn't work source /etc/bashrc  && Rscript --quiet --no-readline --slave -e 'install.packages("IRkernel", repos = "http://cran.us.r-project.org")' && Rscript --no-readline --slave -e "IRkernel::installspec(user = FALSE)" && jupyter kernelspec list | tee -a install_jupyter_IRkernel.log ;\
-    ## trying next one, but maybe just better off invoke a shell script like done for r4envids
-    PATH="${PATH}:/opt/conda/bin" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/conda/lib" Rscript --quiet --no-readline --slave -e 'install.packages("IRkernel", repos = "http://cran.us.r-project.org")' | tee install_jupyter_IRkernel.log ;\
-    PATH="${PATH}:/opt/conda/bin" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/conda/lib" Rscript --quiet --no-readline --slave -e "IRkernel::installspec(user = FALSE)" | tee -a install_jupyter_IRkernel.log ;\
-    PATH="${PATH}:/opt/conda/bin" LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/conda/lib" jupyter kernelspec list | tee -a install_jupyter_IRkernel.log ;\
-    cd /    ;\
-    echo ""  
+    echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
+    apt-get -y --quiet install git-all  ;\
+    test -d /opt/gitrepo  || mkdir -p /opt/gitrepo        ;\
+    cd /opt/gitrepo       ;\
+    #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
+    test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
+    #xx cd /opt/gitrepo/atlas &&  git pull             ;\
+    cd /     ;\
+    echo ""  ;\
+
+COPY . /opt/gitrepo/atlas
+#COPY . /r4eta
+
 
 RUN echo ''  ;\
     cd   /   ;\
@@ -248,32 +231,27 @@ RUN echo ''  ;\
     export TERM=dumb  ;\
 		## additions by Tin
     Rscript --quiet --no-readline --slave -e 'install.packages("tidycensus",     repos = "http://cran.us.r-project.org")'    ;\
-    #Rscript --quiet --no-readline --slave -e 'install.packages("pacman" )'       # provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, but not yet in R 4.0? ;\
-    # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
     Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;\
+    # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
+    Rscript --quiet --no-readline --slave -e 'install.packages("pacman" )'       # provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, seems in R 4.0.3 now ;\
+    Rscript --quiet --no-readline --slave -e 'p_load(utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse)' ;\
+    Rscript --quiet --no-readline --slave -e 'p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager )' ;\
+    Rscript --quiet --no-readline --slave -e 'p_load( ggplot2, scales )' ;\
+    Rscript --quiet --no-readline --slave -e 'p_load( snow, foreach, parallel, doParallel, tictoc )' ;\
+    #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
+
+    # more pacman pkg needed ++
     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;\
     echo "Done installing packages cran packages - part 5" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
     date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
     echo "Dockerfile" | tee  _CONTAINER_tin6150_r4eta_  ;\
     echo ""
 
-RUN echo ''  ;\
-    echo '==================================================================' ;\
-    echo "Pork Barrel: GUI file manager"  |   tee -a _TOP_DIR_OF_CONTAINER_   ;\
-    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
-    echo '==================================================================' ;\
-    echo ''  ;\
-    export TERM=dumb  ;\
-    apt-get install -y --quiet xfe ;\
-    date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
-    echo ""
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_  \
-  && echo  "Dockerfile 2020.0908.1717 hello_world"        >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2020.0927.1025 ggpairs"            >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2021.0831.1814 foreach doSNOW"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.0917.1735 foreach doSNOW"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -289,7 +267,7 @@ ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#sett
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
-ENTRYPOINT [ "R" ]
+ENTRYPOINT [ "Rscript" ]
 # if no defined ENTRYPOINT, default to bash inside the container
 # docker run  -it -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v $HOME:/tmp/home  --user=$(id -u):$(id -g) --entrypoint rstudio tin6150/r4eta
 # careful not to cover /home/username (for this container)

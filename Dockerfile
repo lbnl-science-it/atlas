@@ -71,7 +71,7 @@ RUN echo ''  ;\
     test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
     #xx cd /opt/gitrepo/atlas &&  git pull             ;\
     cd /     ;\
-    echo ""  ;\
+    echo ""  
 
 COPY . /opt/gitrepo/atlas
 #COPY . /r4eta

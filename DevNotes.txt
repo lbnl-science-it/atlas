@@ -1,0 +1,13 @@
+
+r for atlas eta project - dev notes
+-----------------------------------
+
+        docker build -t lbnl-science-it/atlas -f Dockerfile .  | tee Dockerfile.monolithic.LOG
+        docker push     lbnl-science-it/atlas 
+        docker run  -it --entrypoint=bash   lbnl-science-it/atlas
+
+
+
+
+(see tin6150/r4eta for additional build commands)
+

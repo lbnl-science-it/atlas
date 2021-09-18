@@ -251,7 +251,7 @@ RUN echo ''  ;\
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_  \
-  && echo  "Dockerfile 2021.0917.1735 foreach doSNOW"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.0917.1753 foreach doSNOW"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  

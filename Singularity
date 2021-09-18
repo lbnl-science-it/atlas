@@ -51,7 +51,7 @@ From: lbnl-science-it/atlas
 
 %labels
 	#BUILD = 2020_0908_1717_helloWorld
-	BUILD = 2021_0829_0822_foreach_doSNOW
+	BUILD = 2021_0917_1753_foreach_doSNOW
 	MAINTAINER = tin_at_lbl_dot_gov
 	REFERENCES = "https://github.com/tin6150/r4eta"
 
@@ -65,14 +65,6 @@ From: lbnl-science-it/atlas
 %help
 	R programming language env in a container, with many packages from CRAN
 	Example run:
-	Pull and run via singularity-hub:
-	singularity pull --name myR shub://tin6150/r4eta
-	./myR
-	singularity exec myR /usr/bin/Rscript -e 'library()'
-	singularity exec --bind  .:/mnt  myR  /usr/bin/Rscript  /mnt/helloWorld.R > output.txt
-    Where helloWorld.R is in your current dir (on the host system)
-	See README.rst for additional details.
-	source:          https://github.com/tin6150/r4eta
-	docker hub:      https://hub.docker.com/repository/docker/tin6150/r4eta
-	singularity hub: https://singularity-hub.org/collections/4160
+	See README 
+	source:          https://github.com/lbnl-science-it/atlas
 

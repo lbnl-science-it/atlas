@@ -247,7 +247,6 @@ RUN echo ''  ;\
 
     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;\
     ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.5.txt   ;\
-    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee /R_library_list.out.5.a.txt  ;\
     echo "Done installing packages cran packages - part 5" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
     date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
     echo "Dockerfile" | tee  _CONTAINER_lbnl-science-it_atlas_  ;\
@@ -274,6 +273,8 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
+#ENV R_LIBS              /usr/local/lib/R/site-library/
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
 # but how to append, eg add to PATH?
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]

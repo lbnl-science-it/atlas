@@ -242,6 +242,7 @@ RUN echo ''  ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( snow, foreach, parallel, doParallel, tictoc ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( apollo ) }' ;\
     #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
     #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;\
 
@@ -262,7 +263,7 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2021.0918.1435 foreach doSNOW lib-pacman"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.0924.0921 foreach doSNOW lib-pacman apollo"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -273,8 +274,9 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
+# setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
-##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
 # but how to append, eg add to PATH?
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]

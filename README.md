@@ -6,6 +6,8 @@ Container with R and necessary packages to run BEAM/Atlas vehicle simulation.
 Example running R script via Docker
 -----------------------------------
 
+``` bash
+
 cd /global/data/transportation/ATLAS/static/urbansim/
 
 // R script in home dir, bind mounted to container
@@ -19,9 +21,12 @@ docker run -v /global/data/transportation/ATLAS/static/urbansim:/mnt -it --entry
     root@c2bc9c1d6e9f:/mnt# mkdir -p /global/data/transportation/ATLAS/static/urbansim
     root@c2bc9c1d6e9f:/mnt# Rscript model_application/Model_application_hima.R   # error cuz R code call for setwd that doesn't exist
 
+```
 
 Example running R script via Singularity
 ----------------------------------------
+
+```
 
 cd /global/data/transportation/ATLAS/static/urbansim/
 
@@ -33,3 +38,4 @@ singularity shell docker://ghcr.io/lbnl-science-it/atlas:main  # get bash prompt
 singularity run   docker://ghcr.io/lbnl-science-it/atlas:main  # get R    prompt
 
 
+```

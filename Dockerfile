@@ -9,9 +9,9 @@
 
 #FROM r-base:3.6.3
 # r-base:3.6.3 was last of 3.x, ca 2019
-FROM r-base:4.0.3
-#FROM r-base:4.1.1
-# r-base:4.1.1  # ca 2021.0815
+#FROM r-base:4.0.3
+FROM r-base:4.1.1
+# r-base:4.1.1  # ca 2021.10
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive

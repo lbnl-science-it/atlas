@@ -5,9 +5,11 @@ name: Docker
 # separate terms of service, privacy policy, and support
 # documentation.
 
+## 2021.1018 commented out scheduled run, only need to run when changes get pushed.
+
 on:
-  schedule:
-    - cron: '38 7 * * *'
+  #schedule:
+  #  - cron: '38 7 * * *'
   push:
     branches: [ main ]
     # Publish semver tags as releases.

@@ -1,8 +1,13 @@
+## 2021-1018 don't think need this, 
+## workflow docker-publish.yml should build and push to ghcr.io
+## which could be done via schedule or push to branch, so that one is preferred over this one.
+
 name: Docker Image CI
 
 on:
   push:
-    branches: [ main ]
+    #branches: [ main ]
+    branches: [ disabled ]
   pull_request:
     branches: [ main ]
 ## branch name is main, not master

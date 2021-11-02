@@ -243,6 +243,7 @@ RUN echo ''  ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( snow, foreach, parallel, doParallel, tictoc ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( apollo ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( optparse, argparse, stats ) }' ;\
     #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
     #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;\
 
@@ -263,7 +264,7 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2021.0924.0921 foreach doSNOW lib-pacman apollo"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.1101.1825 foreach doSNOW lib-pacman apollo optparse"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  

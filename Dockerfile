@@ -283,6 +283,6 @@ ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#sett
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
-ENTRYPOINT [ "Rscript" ]
+ENTRYPOINT [ "Rscript", "Model_application_hima.R" ]
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)

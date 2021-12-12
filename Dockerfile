@@ -264,7 +264,7 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2021.1101.1825 foreach doSNOW lib-pacman apollo optparse"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile 2021.1212.1308 foreach doSNOW lib-pacman apollo optparse integration"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -275,6 +275,7 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
+ENV DBG_ATLAS_VER       "2021.1212.1308 optparse integration"
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
 ##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway

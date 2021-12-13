@@ -33,9 +33,13 @@ print( "output directory specified as:")
 print( opt$outputdir )
 print( "--" )
 
-print( "tmp exit at this point (007)") 
-quit("no")
+#print( "tmp exit at this point (007)") 
 #exit(007) 
+#+quit("no")
+print( "sleeping 60 sec before continuing..." )
+Sys.sleep(60)
+print( "----Original Model_application_hima.R follows----" )
+print( "" )
 
 ###################################
 ###Codes for running application###

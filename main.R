@@ -22,8 +22,10 @@ if(useparser){
   suppressPackageStartupMessages(library("optparse"))
   
   option_list <- list( 
-    make_option(c("--indir"),  dest="inputdir",  action="store", help="path to input  data", default="tbd" ),
-    make_option(c("--outdir"), dest="outputdir", action="store", help="path to output data", default="tbd" ),
+    make_option(c("--indir"),  dest="inputdirPath",  action="store", help="path to input  data", default="tbd" ),
+    make_option(c("--outdir"), dest="outputdirPath", action="store", help="path to output data", default="tbd" ),
+    make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES" ),
+    make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/opt/gitrepo/atlas" ),
     make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="tbd" ),
     make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="tbd" )
     
@@ -35,17 +37,19 @@ if(useparser){
   
   
   print( "input  directory specified as:") 
-  print( opt$inputdir )
+  print( opt$inputdirPath )
   print( "--" )
   print( "output directory specified as:")
-  print( opt$outputdir )
+  print( opt$outputdirPath )
   print( "--" )
   
   # read out the global variables so that subsequent programs can all use them
   
-  inputdir = opt$inputdir
-  outputdir = opt$outputdir
-  outputdir = opt$outputyear
+  basedir = opt$basedirPath
+  codedir = opt$codedirPath
+  inputdirPath = opt$inputdirPath
+  outputdirPath = opt$outputdirPath
+  outputyear = opt$outputyear
   freq = opt$freq
   inputyear = outputyear - freq
   
@@ -57,15 +61,18 @@ if(useparser){
 
 # 1. set up 
 #codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
-codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
+#XX codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
 setwd(codedir)
 
 
 # Global dir and variables
+# these are best set as command line arguments to main.R via the optparse above
 #basedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES' 
-basedir = '/mnt/' 
-inputdir <- file.path(basedir,'atlas_input')
-outputdir <- file.path(basedir, 'atlas_output')
+#XX basedir = '/mnt/' 
+#XX inputdir <- file.path(basedir,'atlas_input')
+#XX outputdir <- file.path(basedir, 'atlas_output')
+inputdir <- file.path(inputdirPath)
+outputdir <- file.path(outputdirPath)
 
 
 outputyear <- 2017

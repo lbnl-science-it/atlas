@@ -1,3 +1,6 @@
+#!/usr/bin/Rscript
+
+
 ###########################
 # the main code
 ###########################
@@ -17,17 +20,18 @@
 # and extracted various data tables into .csv file
 
 useparser = F  # currently we do not use the parser for directory and year input
+useparser = T  # we do want to use cmd argument parsing now -Tin
 
 if(useparser){  
   suppressPackageStartupMessages(library("optparse"))
   
   option_list <- list( 
-    make_option(c("--indir"),  dest="inputdirPath",  action="store", help="path to input  data", default="tbd" ),
-    make_option(c("--outdir"), dest="outputdirPath", action="store", help="path to output data", default="tbd" ),
+    make_option(c("--indir"),  dest="inputdirPath",  action="store", help="path to input  data", default="/atlas_input" ),
+    make_option(c("--outdir"), dest="outputdirPath", action="store", help="path to output data", default="/atlas_output" ),
     make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES" ),
     make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/opt/gitrepo/atlas" ),
-    make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="tbd" ),
-    make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="tbd" )
+    make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="2017" ),
+    make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="1" )
     
   )
   # input year is previous year in urbansim output, output year is the current year in urbansim output
@@ -36,12 +40,22 @@ if(useparser){
   opt <- parse_args(OptionParser(option_list=option_list))
   
   
+  print( "Hello World from R! (ref:2022.0113.1213)" )
   print( "input  directory specified as:") 
   print( opt$inputdirPath )
   print( "--" )
   print( "output directory specified as:")
   print( opt$outputdirPath )
   print( "--" )
+  print( "codedir  directory specified as:") 
+  print( opt$codedirPath )
+  print( "--" )
+  print( "basedir  directory specified as:") 
+  print( opt$basedirPath )
+  print( "--" )
+  print( "outputyear, freq specified as:") 
+  print( opt$outputyear )
+  print( opt$freq )
   
   # read out the global variables so that subsequent programs can all use them
   
@@ -49,9 +63,13 @@ if(useparser){
   codedir = opt$codedirPath
   inputdirPath = opt$inputdirPath
   outputdirPath = opt$outputdirPath
-  outputyear = opt$outputyear
-  freq = opt$freq
+  outputyear    = strtoi(opt$outputyear, base=10)
+  freq          = strtoi(opt$freq, base=10)
   inputyear = outputyear - freq
+
+  print( "basedir and codedir parsed as:") 
+  print( basedir )
+  print( codedir )
   
 }
 

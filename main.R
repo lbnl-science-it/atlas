@@ -42,28 +42,28 @@ if(useparser){
   
   opt <- parse_args(OptionParser(option_list=option_list))
   
-  
-  print( "Hello World from R! (ref:2022.0113.1213)" )
-  print( "input  directory specified as:") 
-  print( opt$inputdirPath )
-  print( "--" )
-  print( "output directory specified as:")
-  print( opt$outputdirPath )
-  print( "--" )
-  print( "codedir  directory specified as:") 
-  print( opt$codedirPath )
-  print( "--" )
-  print( "basedir  directory specified as:") 
-  print( opt$basedirPath )
-  print( "--" )
-  print( "outputyear, freq specified as:") 
-  print( opt$outputyear )
-  print( opt$freq )
-  print( "number of clusters for parallel computing")
-  
-  print( "sample of households to process")
-  if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
-  
+  showDebug = 1
+  if( showDebug ) {
+    print( "Hello World from R! (rel:2022.0115.1030)" )
+    print( "** input  directory specified as, and content:") 
+    print( opt$inputdirPath )
+    print( list.files( opt$inputdirPath, recursive=TRUE ) )
+    print( "** output directory specified as, and content:")
+    print( opt$outputdirPath )
+    print( list.files( opt$outputdirPath, recursive=TRUE ) )
+    print( "** codedir  directory specified as:") 
+    print( opt$codedirPath )
+    print( "** basedir  directory specified as:") 
+    print( opt$basedirPath )
+    print( "** outputyear, freq specified as:") 
+    print( opt$outputyear )
+    print( opt$freq )
+    print( "** number of clusters for parallel computing")
+    
+    print( "sample of households to process")
+    if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
+  }
+	  
   # read out the global variables so that subsequent programs can all use them
   
   basedir = opt$basedirPath

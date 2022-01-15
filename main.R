@@ -33,7 +33,7 @@ if(useparser){
     make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="2017" ),
     make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="1" ),
     make_option(c("--nsample"), dest="nsample", action="store", help="subsample of hh to process, 0 if all hh", default= "0" ),
-    make_option(c("--npe"), dest="npe", action="store", help="number of cores for parallel computing", default="tbd" ) # number of cores to use in parallel run
+    make_option(c("--npe"), dest="npe", action="store", help="number of cores for parallel computing", default="9" ) # number of cores to use in parallel run
     
     
   )
@@ -74,7 +74,7 @@ if(useparser){
 #  inputyear = outputyear - freq  # this variable will be used for next version of atlas
 #  freq  = strtoi(opt$freq, base=10) # this variable will be used for next version of atlas
   nsample = strtoi(opt$nsample, base=10) # number of households to subsample
-  Npe = opt$npe # number of processors to use
+  Npe = strtoi(opt$npe, base=10) # number of processors to use
 
   print( "basedir and codedir parsed as:") 
   print( basedir )

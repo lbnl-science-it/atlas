@@ -6,11 +6,15 @@ persons <- read.table(file.path(inputdir, paste0('year',diryear),"persons.csv"),
 residential <- read.table(file.path(inputdir, paste0('year',diryear),"residential.csv"), header=T, sep=",")
 jobs <- read.table(file.path(inputdir, paste0('year',diryear),"jobs.csv"), header=T, sep=",")
 
+# correct the error of person_id column name
+if(names(persons)[1] == 'X'){persons = persons %>% rename(person_id = X)}
+
+
 # Accessbility data
 load(file.path(inputdir, "accessbility_2015.RData"))
 
-# availability of transit/bus by tract
-tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))
+# availability of transit/bus by tract, only used for 2010 parameters
+if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}
 
 
 #Create new variables
@@ -184,3 +188,4 @@ households <- households %>% mutate(cc=case_when(county==13~1,T~0), marin=case_w
 
 # remove data not used
 rm(list = c('tract_access', 'jobs','residential','blocks'))
+

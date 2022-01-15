@@ -100,7 +100,7 @@ apollo_fixed <- c("alpha_base", "sigma")
 
 ## load coefficients and process them [Don't need to modify]
 # load(file.path(coefdir, "coefs_apollo.RData"))
-load(file.path(coefdir, "coefs_apollo_update3.RData"))
+load(paste0('coefs_', diryear, '.RData'))
 
 # 1
 names(coef1)[1] <- "const"
@@ -128,3 +128,4 @@ coefs_pick <- unname(coef6_4)
 # 7
 coef_names_power <- coef7_prepare(coef7)[[1]]
 coef_values_power <- coef7_prepare(coef7)[[2]]
+

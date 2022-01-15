@@ -79,23 +79,23 @@ coef7_prepare <- function(coef7){
   coefs_name_bev <- c('const', names(coef7)[seq(from = num_power, to = length(coef7), by = num_power-1)])
   coefs_name_bev <- str_replace_all(coefs_name_bev , ":1", "")
   coefs_bev <- c(cons[1], unname(coef7)[seq(from = num_power, to = length(coef7), by = num_power-1)])
-
+  
   coefs_name_phev <- c('const', names(coef7)[seq(from = num_power+1, to = length(coef7), by = num_power-1)])
   coefs_name_phev <- str_replace_all(coefs_name_phev, ":2", "")
   coefs_phev <- c(cons[2], unname(coef7)[seq(from = num_power+1, to = length(coef7), by = num_power-1)])
-
+  
   coefs_name_hybrid <- c('const', names(coef7)[seq(from = num_power+2, to = length(coef7), by = num_power-1)])
   coefs_name_hybrid <- str_replace_all(coefs_name_hybrid , ":3", "")
   coefs_hybrid <- c(cons[3], unname(coef7)[seq(from = num_power+2, to = length(coef7), by = num_power-1)])
-
+  
   coefs_name_ice <- c('const')
   coefs_ice <- c(0.0)
-
+  
   names <- list(coefs_name_bev, coefs_name_phev, coefs_name_hybrid , coefs_name_ice);
   values <- list(coefs_bev, coefs_phev, coefs_hybrid, coefs_ice)
   coef_power <- list(names, values)
   return(coef_power) # LJ add
-
+  
 }
 
 
@@ -718,7 +718,7 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
   data_temp$ypickup <- indfor$pickup1 + indfor$pickup2 + indfor$pickup3
   data_temp$ypickup[data_temp$ypickup > 0] <- 1
   
-
+  
   car_count_model <- function(data, indfor, coef_names_car, coefs_car) {
     
     
@@ -804,7 +804,7 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
     # dev.off()
     return(indfor[c("ncar1","ncar2","ncar3")])
   }
-
+  
   tt1 <- car_count_model(data_temp, indfor, coef_names_car, coefs_car);
   indfor <- cbind(indfor,tt1);
   rm(tt1);
@@ -1092,42 +1092,42 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
     return(NULL)
   }else{
     vehicles <- vehicles %>% group_by(household_id) %>% dplyr::mutate(vehicle_id= 1:n()) %>% ungroup()
-
+    
     print('now predicting power train')
     powertrain_model <- function(data, coefs_names, coefs_vehs) {
-
+      
       coefs_name_bev <- c(coefs_names[[1]]);
       coefs_name_phev <- c(coefs_names[[2]]);
       coefs_name_hybrid <- c(coefs_names[[3]]);
       coefs_name_ice <- c(coefs_names[[4]]);
-
+      
       coefs_bev <- c(coefs_vehs[[1]]);
       coefs_phev <- c(coefs_vehs[[2]]);
       coefs_hybrid <- c(coefs_vehs[[3]]);
       coefs_ice <- c(coefs_vehs[[4]]);
-
+      
       ### Utility computation
       util_bev <- utility_power(coefs_name_bev, coefs_bev, data);
       util_phev <- utility_power(coefs_name_phev, coefs_phev, data);
       util_hybrid <- utility_power(coefs_name_hybrid, coefs_hybrid, data);
       util_ice <- utility_power(coefs_name_ice, coefs_ice, data);
-
-
+      
+      
       ### Probability computation
       total_util <- util_bev + util_phev + util_hybrid + util_ice ;
       prob_bev <- (util_bev/total_util);
       prob_phev <- (util_phev/total_util);
       prob_hybrid <- (util_hybrid/total_util);
       prob_ice <- (util_ice/total_util);
-
-
+      
+      
       ### Cumulative probability computation
       cum_prob_bev <- prob_bev
       cum_prob_phev <- cum_prob_bev +  prob_phev
       cum_prob_hybrid <- cum_prob_phev +  prob_hybrid;
       cum_prob_ice <- cum_prob_hybrid +  prob_ice;
-
-
+      
+      
       ### Predicted choices
       Numvehicle <- nrow(data);
       rnum <- runif(Numvehicle);
@@ -1136,96 +1136,97 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
       rnum[rnum < cum_prob_hybrid] <- 4;
       rnum[rnum <= 1] <- 5;
       data$pred_power <- rnum-1
-
+      
       data$pred_power[data$pred_power==1] <- "AEV"
       data$pred_power[data$pred_power==2] <- "PHEV"
       data$pred_power[data$pred_power==3] <- "Hybrid"
       data$pred_power[data$pred_power==4] <- "ICE"
-
+      
       tmp <- data[c("pred_power")];
       return(tmp);
     }
-  # if(is.null(vehicles)){ # if none of the vehicles exists, return a NULL dataframe
-  #   return(NULL)
-  # }else{
-  #   vehicles <- vehicles %>% group_by(household_id) %>% dplyr::mutate(vehicle_id= 1:n()) %>% ungroup()
-  #   
-  #   print('now predicting power train')
-  #   powertrain_model <- function(data, coefs_names, coefs_vehs) {
-  #     
-  #     coefs_name_hybrid <- c(coefs_names[[1]]);
-  #     coefs_name_ice <- c(coefs_names[[2]]);
-  #     
-  #     coefs_hybrid <- c(coefs_vehs[[1]]);
-  #     coefs_ice <- c(coefs_vehs[[2]]);
-  #     
-  #     ### Utility computation 
-  #     util_hybrid <- utility_power(coefs_name_hybrid, coefs_hybrid, data);
-  #     util_ice <- utility_power(coefs_name_ice, coefs_ice, data);
-  #     
-  #     
-  #     ### Probability computation
-  #     total_util <- util_hybrid + util_ice ;
-  #     prob_hybrid <- (util_hybrid/total_util);
-  #     prob_ice <- (util_ice/total_util);
-  #     
-  #     
-  #     ### Cumulative probability computation
-  #     cum_prob_hybrid <- prob_hybrid;
-  #     cum_prob_ice <- cum_prob_hybrid +  prob_ice;
-  #     
-  #     
-  #     ### Predicted choices
-  #     Numvehicle <- nrow(data);
-  #     rnum <- runif(Numvehicle);
-  #     rnum[rnum < cum_prob_hybrid] <- 2;
-  #     rnum[rnum < 1] <- 1;
-  #     data$pred_power <- rnum
-  #     
-  #     data$pred_power[data$pred_power==1] <- "Hybrid"
-  #     data$pred_power[data$pred_power==2] <- "ICE"
-  #     
-  #     tmp <- data[c("pred_power")];
-  #     return(tmp);
-  #   }
+    # if(is.null(vehicles)){ # if none of the vehicles exists, return a NULL dataframe
+    #   return(NULL)
+    # }else{
+    #   vehicles <- vehicles %>% group_by(household_id) %>% dplyr::mutate(vehicle_id= 1:n()) %>% ungroup()
+    #   
+    #   print('now predicting power train')
+    #   powertrain_model <- function(data, coefs_names, coefs_vehs) {
+    #     
+    #     coefs_name_hybrid <- c(coefs_names[[1]]);
+    #     coefs_name_ice <- c(coefs_names[[2]]);
+    #     
+    #     coefs_hybrid <- c(coefs_vehs[[1]]);
+    #     coefs_ice <- c(coefs_vehs[[2]]);
+    #     
+    #     ### Utility computation 
+    #     util_hybrid <- utility_power(coefs_name_hybrid, coefs_hybrid, data);
+    #     util_ice <- utility_power(coefs_name_ice, coefs_ice, data);
+    #     
+    #     
+    #     ### Probability computation
+    #     total_util <- util_hybrid + util_ice ;
+    #     prob_hybrid <- (util_hybrid/total_util);
+    #     prob_ice <- (util_ice/total_util);
+    #     
+    #     
+    #     ### Cumulative probability computation
+    #     cum_prob_hybrid <- prob_hybrid;
+    #     cum_prob_ice <- cum_prob_hybrid +  prob_ice;
+    #     
+    #     
+    #     ### Predicted choices
+    #     Numvehicle <- nrow(data);
+    #     rnum <- runif(Numvehicle);
+    #     rnum[rnum < cum_prob_hybrid] <- 2;
+    #     rnum[rnum < 1] <- 1;
+    #     data$pred_power <- rnum
+    #     
+    #     data$pred_power[data$pred_power==1] <- "Hybrid"
+    #     data$pred_power[data$pred_power==2] <- "ICE"
+    #     
+    #     tmp <- data[c("pred_power")];
+    #     return(tmp);
+    #   }
     tt1 <- powertrain_model(vehicles, coef_names_power, coef_values_power);
     vehicles <- cbind(vehicles,tt1);
     rm(tt1);
     
-    # # 8. Main driver
-    # print('now predicting maindriver')
-    # 
-    # vehicles$power_ev <-  0
-    # vehicles$power_ev[vehicles$pred_power!="ICE"] <- 1
-    # vehicle_person <- vehicles %>% merge(persons, by = "household_id")
-    # 
-    # ## Generate Interaction Term
-    # vehicle_person <- vehicle_person %>% mutate(power_age=power_ev*R_AGE_IMP, van_age=van*R_AGE_IMP, suv_age=suv*R_AGE_IMP, pickup_age=pickup*R_AGE_IMP,
-    #                                             power_sex=power_ev*R_SEX_IMP, van_sex=van*R_SEX_IMP, suv_sex=suv*R_SEX_IMP, pickup_sex=pickup*R_SEX_IMP,
-    #                                             power_high=power_ev*high, van_high=van*high, suv_high=suv*high, pickup_high=pickup*high,
-    #                                             power_coll=power_ev*college, van_coll=van*college, suv_coll=suv*college, pickup_coll=pickup*college,
-    #                                             power_grad=power_ev*graduate, van_grad=van*graduate, suv_grad=suv*graduate, pickup_grad=pickup*graduate,
-    #                                             power_school=power_ev*school, van_school=van*school, suv_school=suv*school, pickup_school=pickup*school,
-    #                                             power_retired=power_ev*retired_person, van_retired=van*retired_person, suv_retired=suv*retired_person, pickup_retired=pickup*retired_person,
-    #                                             power_full=power_ev*work, van_full=van*work, suv_full=suv*work, pickup_full=pickup*work,
-    #                                             power_black=power_ev*black, van_black=van*black, suv_black=suv*black, pickup_black=pickup*black,
-    #                                             power_asian=power_ev*asian, van_asian=van*asian, suv_asian=suv*asian, pickup_asian=pickup*asian,
-    #                                             power_rother=power_ev*race_other, van_rother=van*race_other, suv_rother=suv*race_other, pickup_rother=pickup*race_other)
-    # 
-    # 
-    # #### Predict who is the main driver
-    # print('use predict func for main driver prob')
-    # vehicle_person <- cbind(vehicle_person, stats::predict(maindriver_logit3, vehicle_person, type='response')) # LJ add stats::
-    # names(vehicle_person)[ncol(vehicle_person)] <- "pred_driver"
-    # 
-    # print('use find main driver')
-    # 
-    # vehicle_person <- vehicle_person %>% group_by(household_id, vehicle_id) %>% dplyr::slice(which.max(pred_driver)) # LJ change added dplyr::
-    # vehicle_person <- vehicle_person[, c("household_id", "vehicle_id", "person_id")]
-    # names(vehicle_person)[match("person_id", names(vehicle_person))] <- "maindriver_id"
+    # Updated by Qianmiao 2022.1.12
+    # 8. Main driver
+    print('now predicting maindriver')
+    
+    vehicles$power_ev <-  0
+    vehicles$power_ev[vehicles$pred_power!="ICE"] <- 1
+    vehicle_person <- vehicles %>% merge(persons, by = "household_id")
+    
+    ## Generate Interaction Term
+    vehicle_person <- vehicle_person %>% mutate(R_AGE=R_AGE_IMP, R_SEX=R_SEX_IMP, van_age=van*R_AGE_IMP, suv_age=suv*R_AGE_IMP, pickup_age=pickup*R_AGE_IMP,
+                                                van_sex=van*R_SEX_IMP, suv_sex=suv*R_SEX_IMP, pickup_sex=pickup*R_SEX_IMP,
+                                                van_high=van*high, suv_high=suv*high, pickup_high=pickup*high,
+                                                van_coll=van*college, suv_coll=suv*college, pickup_coll=pickup*college,
+                                                van_grad=van*graduate, suv_grad=suv*graduate, pickup_grad=pickup*graduate,
+                                                van_school=van*school, suv_school=suv*school, pickup_school=pickup*school,
+                                                van_retired=van*retired_person, suv_retired=suv*retired_person, pickup_retired=pickup*retired_person,
+                                                van_full=van*work, suv_full=suv*work, pickup_full=pickup*work,
+                                                van_black=van*black, suv_black=suv*black, pickup_black=pickup*black,
+                                                van_asian=van*asian, suv_asian=suv*asian, pickup_asian=pickup*asian,
+                                                van_rother=van*race_other, suv_rother=suv*race_other, pickup_rother=pickup*race_other)
+    
+    
+    #### Predict who is the main driver
+    print('use predict func for main driver prob')
+    vehicle_person <- cbind(vehicle_person, stats::predict(maindriver_logit3, vehicle_person, type='response')) # LJ add stats::
+    names(vehicle_person)[ncol(vehicle_person)] <- "pred_driver"
+    
+    print('use find main driver')
+    
+    vehicle_person <- vehicle_person %>% group_by(household_id, vehicle_id) %>% dplyr::slice(which.max(pred_driver)) # LJ change added dplyr::
+    vehicle_person <- vehicle_person[, c("household_id", "vehicle_id", "person_id")]
+    names(vehicle_person)[match("person_id", names(vehicle_person))] <- "maindriver_id"
     # 
     # ### Result of Vehicle Level Data
-    # vehicles <- vehicles %>% merge(vehicle_person, by=c("household_id", "vehicle_id"), all.x=TRUE)
+    vehicles <- vehicles %>% merge(vehicle_person, by=c("household_id", "vehicle_id"), all.x=TRUE)
     vehicles$annual_mileage <- 0
     vehicles$annual_mileage[vehicles$ycar1==1] <- vehicles$car1[vehicles$ycar1==1]/vehicles$ncar1[vehicles$ycar1==1]
     vehicles$annual_mileage[vehicles$ycar2==1] <- vehicles$car2[vehicles$ycar2==1]/vehicles$ncar2[vehicles$ycar2==1]
@@ -1251,7 +1252,7 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
                                     bev=case_when(pred_power=="AEV"~1, TRUE~0),
                                     hybrid=case_when(pred_power=="Hybrid"~1, TRUE~0),
                                     phev=case_when(pred_power=="PHEV"~1, TRUE~0))
-
+    
     #### Predict own or lease
     vehicles <- cbind(vehicles, stats::predict(ownlease.static, vehicles, type='response')) # LJ add stats::
     names(vehicles)[ncol(vehicles)] <- "pred_ownlease"
@@ -1262,7 +1263,26 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
     vehicles["pred_own"] <- NULL
     names(vehicles)[ncol(vehicles)] <- "pred_own"
     
+    # Add: 2022.1.13 by Qianmiao
+    # Generate two data sets
+    households_output <- vehicles %>% select(household_id, budget) %>% group_by(household_id) %>% summarise(nvehicles=n(), budget=mean(budget))
+    households_output <- data1 %>% merge(households_output, by="household_id", all.x = T) %>% select(household_id, nvehicles, budget)
+    households_output$nvehicles[is.na(households_output$nvehicles)==T] <- 0
+    households_output$budget[is.na(households_output$budget)==T] <- 0
+    # households_output <- households_output %>% mutate(nvehicles_cat=case_when(nvehicles==0~"None", nvehicles==1~"One",
+    #                                                                           nvehicles==2~"Two", nvehicles==3~"Three", T~"Four or more"))
+    
+    vehicles_output <- vehicles %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
+      mutate(bodytype=case_when(car==1~"car", van==1~"van", suv==1~"suv", pickup==1~"pickup", T~"others"),
+             vintage_category=case_when(VEHAGE0==1~"0~5 years", VEHAGE1==1~"6~11 years", VEHAGE2==1~"12+ years"),
+             ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
+                                                                          maindriver_id, annual_mileage, pred_power, ownlease)
+    
+    output <- list()
+    output[[1]] <- households_output
+    output[[2]] <- vehicles_output
+    
     print('return results')
-    return(vehicles)
+    return(output)
   }
 }

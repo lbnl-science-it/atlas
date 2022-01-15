@@ -183,3 +183,4 @@ coefs_pick <- unname(coef6_4)
 coef_names_power <- coef7_prepare(coef7)[[1]]
 coef_values_power <- coef7_prepare(coef7)[[2]]
 
+

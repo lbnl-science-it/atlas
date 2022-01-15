@@ -6,11 +6,14 @@ persons <- read.table(file.path(inputdir, paste0('year',diryear),"persons.csv"),
 residential <- read.table(file.path(inputdir, paste0('year',diryear),"residential.csv"), header=T, sep=",")
 jobs <- read.table(file.path(inputdir, paste0('year',diryear),"jobs.csv"), header=T, sep=",")
 
+# correct the error of person_id column name
+names(persons)[1] <- "person_id"
+
 # Accessbility data
 load(file.path(inputdir, "accessbility_2015.RData"))
 
-# availability of transit/bus by tract
-tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))
+# availability of transit/bus by tract, only used for 2010 parameters
+if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}
 
 #Create new variables
 #	INCOME1		    - Lowest income household (< $25,000)
@@ -114,7 +117,7 @@ names(households)[names(households) == "access_zscore"] <- "emp_zscore"
 # households <- households %>% merge(regionaldata, by="tract_id")
 tracts <- blocks %>% group_by(tract_id) %>% summarise(square_meters=sum(square_meters_land))
 tracts <- tracts %>% mutate(square_km=(square_meters/10^6))  #*0.386102
-tracts_pop <- persons %>% merge(households, by="household_id") %>% group_by(tract_id) %>% summarise(population=n_distinct(X))
+tracts_pop <- persons %>% merge(households, by="household_id") %>% group_by(tract_id) %>% summarise(population=n_distinct(person_id))
 tracts <- tracts %>% merge(tracts_pop, by="tract_id")
 tracts_job <- jobs %>% mutate(tract_id=floor(block_id/10000)) %>% group_by(tract_id) %>% summarise(jobs=n_distinct(job_id))
 tracts <- tracts %>% merge(tracts_job, by="tract_id")
@@ -165,3 +168,10 @@ persons <- persons %>% mutate(work = case_when(worker == 1 ~ 1, TRUE~0),
                                               retired_person = case_when(R_AGE_IMP >= 65 ~ 1, TRUE~0))
 
 #save(persons, file = "data_clean17/persons.RData")
+if(diryear == 2010){
+  rm(list = c('tract_access', 'jobs','residential','blocks'))
+}else{
+  rm(list = c('jobs','residential','blocks'))
+}
+
+

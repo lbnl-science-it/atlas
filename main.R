@@ -189,7 +189,7 @@ stopImplicitCluster()
 
 # 5. write out the results # we may need to add some post processing code here after clarifying the variables with Qianmiao
 
-write.csv(res[[2]], file = file.path(outputdir, paste0('vehicles_',outputyear,'.csv'))) # vehicle level prediction
-write.csv(res[[1]], file = file.path(outputdir, paste0('householdv_',outputyear,'.csv'))) # houshold level prediction
+write.csv(res[[2]], file = file.path(outputdir, paste0('vehicles_',outputyear,'.csv')), row.names = F) # vehicle level prediction
+write.csv(res[[1]], file = file.path(outputdir, paste0('householdv_',outputyear,'.csv')),row.names = F) # houshold level prediction
 
 

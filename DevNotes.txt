@@ -10,6 +10,8 @@ r for atlas eta project - dev notes
         # docker run  -it --entrypoint=bash   lbnl-science-it/atlas  # not sure if docker hub exist for lbnl-science-it
 
 
+        docker build -t tin6150/atlas:base -f Dockerfile.base .  | tee Dockerfile.base.LOG
+	# trying out base, split into multiple Dockerfile later...
 
 
 (see tin6150/r4eta for additional build commands)

@@ -7,11 +7,12 @@
 # (model after tin6150/r4eta container)
  
 
-#FROM r-base:3.6.3
 # r-base:3.6.3 was last of 3.x, ca 2019
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu
+#FROM r-base:3.6.3
 #FROM r-base:4.0.3
-FROM r-base:4.1.1
-# r-base:4.1.1  # ca 2021.10
+#FROM r-base:4.1.1  
+FROM ubuntu:21.04
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -22,6 +23,23 @@ ARG TZ=PST8PDT
 ARG NO_COLOR=1
 
 #ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
+
+## base branch, rebuild with r-base
+## and core packages
+## then atlas code can be build on top of this
+## reduce build time for small changes
+## also use different OS than debian that stock r-base container use
+## see if circumvent problem with ghcr.io built image
+
+RUN echo  ''  ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
+    apt-get update ;\
+    apt-get -y --quiet install r-base ;\
+    cd /    ;\
+    echo ""  
 
 RUN echo  ''  ;\
     touch _TOP_DIR_OF_CONTAINER_  ;\
@@ -256,6 +274,8 @@ RUN echo ''  ;\
     pwd  ;\
     echo ""
 
+#++ some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
+
 # moved this copy code down hoping R code change would not need rebuild all layers which take couple of hours
 COPY . /
 #COPY . /opt/gitrepo/atlas
@@ -266,7 +286,7 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile 2022.0112.2323 integration copyAtEnd"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0130.2316 base TmpCopyAtEnd"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -277,7 +297,7 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
-ENV DBG_ATLAS_VER       "2022.0112.2323 integration copyAtEnd"
+ENV DBG_ATLAS_VER       "2022.0130.2316 base tmpCopyAtEnd"
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
 ##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
@@ -287,6 +307,7 @@ ENV DBG_ATLAS_VER       "2022.0112.2323 integration copyAtEnd"
 #ENTRYPOINT [ "/bin/bash" ]
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
 #ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/Model_application_hima.R" ]
-ENTRYPOINT [ "Rscript", "/main.R" ]
+#ENTRYPOINT [ "Rscript", "/main.R" ]
+ENTRYPOINT [ "R" ]
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)

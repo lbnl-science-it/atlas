@@ -14,3 +14,15 @@ r for atlas eta project - dev notes
 
 (see tin6150/r4eta for additional build commands)
 
+
+
+
+manual build
+------------
+
+  docker build -t tin6150/atlas:ubuntu -f Dockerfile . | tee Dockerfile.log
+  docker push     tin6150/atlas:ubuntu 
+  docker tag      tin6150/atlas:ubuntu tin6150/atlas:integrationU
+  docker push     tin6150/atlas:integrationU                           # just to be very obvious this is same as integration branch, rebuild cuz of ubuntu compatibility problem.
+  # and strangely, this image works in the aws ubuntu instance, but NOT the ghcr one.  unsure why at this point.
+

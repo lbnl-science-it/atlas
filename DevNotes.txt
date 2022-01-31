@@ -12,6 +12,8 @@ r for atlas eta project - dev notes
 
         docker build -t tin6150/atlas:base -f Dockerfile.base .  | tee Dockerfile.base.LOG
 	# trying out base, split into multiple Dockerfile later...
+	# ghcr docker-publish.yml workflow only work with "Dockerfile", 
+	# so will have a branch-specific sym link for this file
 
 
 (see tin6150/r4eta for additional build commands)

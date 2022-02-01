@@ -6,6 +6,10 @@
 # docker build -f Dockerfile .  | tee Dockerfile-base.log 
 # see DevNotes.rst for more build details
 
+# branch specific settings:
+# base: Dockerfile -> Dockerfile.base
+# main: Dockerfile -> Dockerfile.atlas # ie layer 2 that build on top of Dockerfile.base
+
 # rscript has its own set of fairly long install...
 # (model after tin6150/r4eta container)
  

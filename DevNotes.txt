@@ -18,3 +18,5 @@ r for atlas eta project - dev notes
 
 (see tin6150/r4eta for additional build commands)
 
+
+[branch dev-hist has a few example R files that has been deleted from main branch, kept here in case need to use the examples again for other projects]

@@ -1,7 +1,10 @@
 # Dockerfile for creating R container 
 # and add specific library needed by projects by LBNL/ETA
-# local build should work, but it no longer has all the updates done Dockerfile.metabolic
-# docker build -t lbnl-science-it/atlas -f Dockerfile .  | tee Dockerfile.monolithic.log 
+# base is now OS, R-base, and necessary R libraries from CRAN
+# atlas is a l2 (layer 2) that have atlas R code (and possibly a few add on CRAN packages)
+# mostly:
+# docker build -f Dockerfile .  | tee Dockerfile-base.log 
+# see DevNotes.rst for more build details
 
 # rscript has its own set of fairly long install...
 # (model after tin6150/r4eta container)
@@ -12,7 +15,8 @@
 #FROM r-base:3.6.3
 #FROM r-base:4.0.3
 #FROM r-base:4.1.1  
-FROM ubuntu:21.04
+#FROM ubuntu:21.04 # R still don't work in aws instance
+FROM debian:11
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -276,17 +280,16 @@ RUN echo ''  ;\
 
 #++ some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
 
-# moved this copy code down hoping R code change would not need rebuild all layers which take couple of hours
-COPY . /
+# this is now done by Dockerfile.atlas, ie layer 2 docker image add on build process.
+#xxCOPY . /
 #COPY . /opt/gitrepo/atlas
-#COPY . /r4eta
 
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0130.2316 base TmpCopyAtEnd"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0201.0016 base noTmpCopyAtEnd"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 #- ENV TZ America/Los_Angeles  
@@ -297,7 +300,7 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
-ENV DBG_ATLAS_VER       "2022.0130.2316 base tmpCopyAtEnd"
+ENV DBG_ATLAS_VER       "2022.0201.0016 base NoTmpCopyAtEnd"
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
 ##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway

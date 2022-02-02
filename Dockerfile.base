@@ -6,6 +6,10 @@
 # docker build -f Dockerfile .  | tee Dockerfile-base.log 
 # see DevNotes.rst for more build details
 
+# branch specific settings:
+# base: Dockerfile -> Dockerfile.base
+# main: Dockerfile -> Dockerfile.atlas # ie layer 2 that build on top of Dockerfile.base
+
 # rscript has its own set of fairly long install...
 # (model after tin6150/r4eta container)
  
@@ -16,7 +20,11 @@
 #FROM r-base:4.0.3
 #FROM r-base:4.1.1  
 #FROM ubuntu:21.04 # R still don't work in aws instance
-FROM debian:11
+#FROM debian:11  # R works in Mint, but only 4.0.1 and don't have pacman
+#FROM debian:11  # R works in Mint, but only 4.0.1 and don't have pacman
+#FROM bulleye  # https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1
+# https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
+FROM testing-slim # aka testing-20220125-slim # -slim remove man pages and other things not needed in container
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive

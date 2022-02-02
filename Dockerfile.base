@@ -23,7 +23,8 @@
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bulleye     # https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1
 # https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
-FROM debian:testing-slim # aka testing-20220125-slim # -slim remove man pages and other things not needed in container
+# debian:testing-slim # aka testing-20220125-slim # -slim remove man pages and other things not needed in container... but 
+FROM "debian:testing-slim"
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive

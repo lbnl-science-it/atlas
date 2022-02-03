@@ -15,10 +15,10 @@
  
 
 # r-base:3.6.3 was last of 3.x, ca 2019
-# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu.  back to this as did not find workable alternative, so back to this.
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu.  this is the only working solution for Atlas, as it needs Apollo package.
 #FROM r-base:3.6.3
 #FROM r-base:4.0.3
-FROM r-base:4.1.1
+#FROM r-base:4.1.1
 
 #FROM ubuntu:21.04       # R still don't work in aws instance
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
@@ -27,6 +27,7 @@ FROM r-base:4.1.1
 # https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
 # debian:testing-slim # aka testing-20220125-slim , which results to "Debian GNU/Linux bookworm/sid" # -slim remove man pages and other things not needed in container.  this has R 4.1.2-1 and R no longer works in Ubuntu/Zorin :-\ 
 #FROM debian:testing-slim
+FROM debian:testing
 
 
 MAINTAINER Tin (at) LBL.gov

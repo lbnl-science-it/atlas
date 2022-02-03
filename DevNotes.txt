@@ -36,7 +36,8 @@ build via layers
 
         branch 
           - base: back to using r-base image, will have to do manual build on CentOS and push to docker hub for use on aws/ubuntu
-          - altbase: resume work on finding alternate (non ubuntu) os base that has R 4.1 and can get apollo package in it.  no good solution at this point.
+          - altbase: resume work on finding alternate (non ubuntu) os base that has R 4.1 and can get apollo package in it.  no good solution at this point.   rely on clould build on this branch
+            may use a dev branch for layer to using this altbase... also build in cloud...
 	
 (see tin6150/r4eta for additional build commands)
 

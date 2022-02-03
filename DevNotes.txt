@@ -26,12 +26,17 @@ r for atlas eta project - dev notes
 build via layers
 ----------------
 
-        docker build -t tin6150/atlas:base -f Dockerfile.base  .  | tee Dockerfile.base.LOG
+	# perform build on CentOS machine, so that R is usable in aws/ubuntu instance.
+        docker build -t tin6150/atlas:base -f Dockerfile.base  .  | tee LOG.Dockerfile.base.2022.0203
         # for now, still in base branch running this manually ex4
-        docker build -t tin6150/atlas:l2   -f Dockerfile.atlas .  | tee Dockerfile.atlas.LOG
+        docker build -t tin6150/atlas:l2   -f Dockerfile.atlas .  | tee LOG.Dockerfile.atlas.2022.0203
         docker push     tin6150/atlas:l2
         docker run -it --entrypoint=bash tin6150/atlas:l2
 
 
+        branch 
+          - base: back to using r-base image, will have to do manual build on CentOS and push to docker hub for use on aws/ubuntu
+          - altbase: resume work on finding alternate (non ubuntu) os base that has R 4.1 and can get apollo package in it.  no good solution at this point.
+	
 (see tin6150/r4eta for additional build commands)
 

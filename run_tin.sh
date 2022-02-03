@@ -32,5 +32,10 @@ docker run \
 docker run \
            -v $atlas_input_dir:/atlas_input    \
            -v $atlas_output_dir:/atlas_output  \
-     ghcr.io/lbnl-science-it/atlas:integration  --outyear=2017 --freq=1    --codedir=/
+     ghcr.io/lbnl-science-it/atlas:integration  --outyear=2010 --freq=1    --codedir=$codedir  --basedir=$basedir
+
+     ###ghcr.io/lbnl-science-it/atlas:integration  --outyear=$outyear --freq=$freq    --codedir=$codedir  --basedir=$basedir
+
+
+# eg     ghcr.io/lbnl-science-it/atlas:integration  --outyear=2017 --freq=1    --codedir=/  --basedir=/  --nsample=0 --npe=31
 

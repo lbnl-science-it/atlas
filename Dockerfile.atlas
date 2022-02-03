@@ -1,0 +1,112 @@
+# Dockerfile Layer 2 for atlas
+# Add to Layer 1 for quick code update
+# docker build -t lbnl-science-it/atlas -f Dockerfile.atlas .  | tee Dockerfile.layer2.log 
+# (see DevNotes.rst for alternate details)
+
+# branch specific settings:
+# base: Dockerfile -> Dockerfile.base
+# main: Dockerfile -> Dockerfile.atlas # ie layer 2 that build on top of Dockerfile.base 
+# Can probably alter the .github/workflow/docker-publish.yml, but this will do for now :D
+
+# r-base:3.6.3 was last of 3.x, ca 2019
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with aws/ubuntu: R won't run
+#FROM r-base:3.6.3
+#FROM r-base:4.0.3
+#FROM r-base:4.1.1  
+
+# ghcr.io/lbnl-science-it/atlas are automated build using an ubuntu container, which works for CentOS, but in aws/ubuntu R won't start
+# tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
+#FROM ghcr.io/lbnl-science-it/atlas:base
+FROM tin6150/atlas:base
+MAINTAINER Tin (at) LBL.gov
+
+ARG DEBIAN_FRONTEND=noninteractive
+#ARG TERM=vt100
+ARG TERM=dumb
+ARG TZ=PST8PDT 
+#https://no-color.org/
+ARG NO_COLOR=1
+
+#ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
+
+## branch l2 (ie layer2, for code dev)
+## depends on base branch, rebuild with r-base
+
+RUN echo  ''  ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "Layer 2 atlas code addition" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
+    cd /    ;\
+    echo ""  
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    #echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
+    #apt-get -y --quiet install git-all  ;\
+    #test -d /opt/gitrepo  || mkdir -p /opt/gitrepo        ;\
+    #cd /opt/gitrepo       ;\
+    #test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
+    #test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
+    #cd /opt/gitrepo/atlas &&  git pull             ;\
+    #git checkout l2     ;\
+    cd /     ;\
+    echo ""  
+
+
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    echo '' ;\
+    export TERM=dumb  ;\
+    ## Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( optparse, argparse, stats ) }' ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.l2.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.l2.txt   ;\
+    echo "Done installing packages cran packages - layer 2" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
+    cd /     ;\
+    # tmp for test with Ling's tmp code
+    mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
+    mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    pwd  ;\
+    echo ""
+
+#++ some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
+
+# moved this copy code down hoping R code change would not need rebuild all layers which take couple of hours
+COPY . /
+COPY . /opt/gitrepo/atlas
+
+
+RUN  cd / \
+  && touch _TOP_DIR_OF_CONTAINER_  \
+  && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
+  && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.atlas 2022.0203.0040 (on direct R-base) AtlasCodeJan"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Grand Finale"
+
+ENV DBG_ATLAS_VER       "Docker.atlas 2022.0203.0040 (on direct R-base) atlasCodeJan"
+ENV DBG_DOCKERFILE Dockerfile.atlas
+ENV TZ America/Los_Angeles 
+# ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
+# ENV does overwrite parent def of ENV, so can rewrite them as fit.
+ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
+ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
+ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
+
+## ++TODO++ maybe play with these to see if R in aws/Ubuntu works better when build by ghcr.io
+# setting R_LIBS here not needed, it get stored in /etc/r.../profile
+#ENV R_LIBS              /usr/local/lib/R/site-library/
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
+# unsure how to append/add to PATH?  likely have to manually rewrite the whole ENV var
+
+#ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
+#ENTRYPOINT [ "/bin/bash" ]
+#ENTRYPOINT [ "/usr/bin/rstudio" ]
+#ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/Model_application_hima.R" ]
+ENTRYPOINT [ "Rscript", "/main.R" ]
+##ENTRYPOINT [ "R" ]
+# if no defined ENTRYPOINT, default to bash inside the container
+# careful not to cover /home/username (for this container)
+
+# vim: shiftwidth=4 tabstop=4 formatoptions-=cro list nu syntax=on

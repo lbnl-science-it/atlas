@@ -19,7 +19,7 @@
 # Note that preceding this docker call, the preprocessing py code already took .h5 output from urbansim 
 # and extracted various data tables into .csv file
 
-useparser = F  # currently we do not use the parser for directory and year input
+#useparser = F  # currently we do not use the parser for directory and year input
 useparser = T  # we do want to use cmd argument parsing now -Tin
 
 if(useparser){  
@@ -28,8 +28,8 @@ if(useparser){
   option_list <- list( 
     make_option(c("--indir"),  dest="inputdirPath",  action="store", help="path to input  data", default="/atlas_input" ),
     make_option(c("--outdir"), dest="outputdirPath", action="store", help="path to output data", default="/atlas_output" ),
-    make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES" ),
-    make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/opt/gitrepo/atlas" ),
+    make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="/" ),
+    make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/" ),
     make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="2017" ),
     make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="1" ),
     make_option(c("--nsample"), dest="nsample", action="store", help="subsample of hh to process, 0 if all hh", default= "0" ),
@@ -86,19 +86,19 @@ if(useparser){
 #-------- Below is Ling's code with inputdir, outputdir, inputyear, outputyear manually defined -----#
 # can be modified 
 if(!useparser){ # if not using parser, define things here for debuging process
-  codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
-  codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
-
+#  codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
+ codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
+ codedir = '/'
   # Global dir and variables
   # these are best set as command line arguments to main.R via the optparse above
-  basedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas'
+#  basedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas'
   basedir = '/mnt/'
   inputdir <- file.path(basedir,'atlas_input')
   outputdir <- file.path(basedir, 'atlas_output')
   
   
   outputyear <- 2010
-  nsample = 1000
+  nsample = 20000
   Npe = 2
   
 }
@@ -139,21 +139,27 @@ library(foreach)
 registerDoParallel(cores = Npe) 
 
 Nloop.max = floor(nrow(hh.masterdat)/10000)
+print(paste('pop max loop',Nloop.max))
+
 
 # determine sample of households to process
 if(nsample > nrow(hh.masterdat)){stop('requested number of households exceeds the max number of existing households')}
 
 if(nsample == 0){
+  print('processing the full population')
   Nloop = Nloop.max # full sample
   hh.dat = hh.masterdat
 }else{ # if 0 < nsample < max hh number
+  print(paste('processing subsample',nsample,'hh'))
   Nloop = floor(nsample/10000)
+  print(paste('actual Nloop',Nloop))
   set.seed(4847384) # so that it is reproducible
   hh.dat = hh.masterdat %>% sample_n(nsample)
 }
 
 
 if(Nloop == 0){ # nsample less than 10000 hh, direct compute
+  print('less than 10000 households, using a serial run')
   data1 = hh.dat
   persons <- data1 %>% dplyr::select(household_id) %>% merge(pp.masterdat, by="household_id")
   res = model_application(persons, data1, coefs_name_mile, coefs_mile , coef_names_veh, coef_values_veh, 
@@ -174,8 +180,8 @@ if(Nloop == 0){ # nsample less than 10000 hh, direct compute
     }
     #rm(households)
     print(paste('loop',i))
-    persons <- data1 %>% dplyr::select(household_id) %>% merge(pp.masterdat, by="household_id")
-    model_application(persons, data1, coefs_name_mile, coefs_mile , coef_names_veh, coef_values_veh, 
+    pp.tmp <- data1 %>% dplyr::select(household_id) %>% merge(pp.masterdat, by="household_id")
+    model_application(pp.tmp, data1, coefs_name_mile, coefs_mile , coef_names_veh, coef_values_veh, 
                       coef_names_type, coef_values_type, coef_names_car, coefs_car,
                       coef_names_van, coefs_van, coef_names_suv, coefs_suv, coef_names_pick, coefs_pick,
                       coef_names_power, coef_values_power)
@@ -186,10 +192,22 @@ if(Nloop == 0){ # nsample less than 10000 hh, direct compute
 
 stopImplicitCluster()
 
+# now reformat the results and write out tables
+print('reformat results into vehicle and household tables and write out')
+households_output <- res %>% select(household_id, budget) %>% group_by(household_id) %>% summarise(nvehicles=n(), budget=mean(budget))
+households_output <- hh.dat %>% merge(households_output, by="household_id", all.x = T) %>% select(household_id, nvehicles, budget)
+households_output$nvehicles[is.na(households_output$nvehicles)==T] <- 0
+households_output$budget[is.na(households_output$budget)==T] <- 0
+
+vehicles_output <- res %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
+  mutate(bodytype=case_when(car==1~"car", van==1~"van", suv==1~"suv", pickup==1~"pickup", T~"others"),
+         vintage_category=case_when(VEHAGE0==1~"0~5 years", VEHAGE1==1~"6~11 years", VEHAGE2==1~"12+ years"),
+         ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
+                                                                      maindriver_id, annual_mileage, pred_power, ownlease)
 
 # 5. write out the results # we may need to add some post processing code here after clarifying the variables with Qianmiao
 
-write.csv(res[[2]], file = file.path(outputdir, paste0('vehicles_',outputyear,'.csv')), row.names = F) # vehicle level prediction
-write.csv(res[[1]], file = file.path(outputdir, paste0('householdv_',outputyear,'.csv')),row.names = F) # houshold level prediction
+write.csv(vehicles_output, file = file.path(outputdir, paste0('vehicles_',outputyear,'.csv')), row.names = F) # vehicle level prediction
+write.csv(households_output, file = file.path(outputdir, paste0('householdv_',outputyear,'.csv')),row.names = F) # houshold level prediction
 
 

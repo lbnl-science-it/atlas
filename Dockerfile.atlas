@@ -9,11 +9,15 @@
 # Can probably alter the .github/workflow/docker-publish.yml, but this will do for now :D
 
 # r-base:3.6.3 was last of 3.x, ca 2019
-# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with aws/ubuntu: R won't run
 #FROM r-base:3.6.3
 #FROM r-base:4.0.3
 #FROM r-base:4.1.1  
-FROM ghcr.io/lbnl-science-it/atlas:base
+
+# ghcr.io/lbnl-science-it/atlas are automated build using an ubuntu container, which works for CentOS, but in aws/ubuntu R won't start
+# tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
+#FROM ghcr.io/lbnl-science-it/atlas:base
+FROM tin6150/atlas:base
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -78,22 +82,23 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.l2 2022.0201.debian11 l2 atlasCode"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.atlas 2022.0203.0040 (on direct R-base) AtlasCodeJan"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
-#- ENV TZ America/Los_Angeles  
+ENV DBG_ATLAS_VER       "Docker.atlas 2022.0203.0040 (on direct R-base) atlasCodeJan"
+ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
 # ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
-#ENV DOCKERFILE Dockerfile[.cmaq]
-# does overwrite parent def of ENV DOCKERFILE
+# ENV does overwrite parent def of ENV, so can rewrite them as fit.
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
-ENV DBG_ATLAS_VER       "2022.0201.debian11 l2 atlasCode"
+
+## ++TODO++ maybe play with these to see if R in aws/Ubuntu works better when build by ghcr.io
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
 ##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
-# but how to append, eg add to PATH?
+# unsure how to append/add to PATH?  likely have to manually rewrite the whole ENV var
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]
@@ -103,3 +108,5 @@ ENTRYPOINT [ "Rscript", "/main.R" ]
 ##ENTRYPOINT [ "R" ]
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
+
+# vim: shiftwidth=4 tabstop=4 formatoptions-=cro list nu syntax=on

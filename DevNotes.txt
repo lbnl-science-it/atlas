@@ -1,5 +1,13 @@
 
+
 r for atlas eta project - dev notes
+===================================
+
+
+FROM ghcr.io/lbnl-science-it/atlas:base     # r-base official image
+FROM tin6150/atlas:base                     # same as above, but build manually and pushed to dockerhub, so it works in aws/ubuntu
+FROM ghcr.io/lbnl-science-it/atlas:altbase  # Debian or other OS, then install R as package.  last test with debian:testing, tidyverse was not fully installed.
+
 
         #@@ docker build -t lbnl-science-it/atlas -f Dockerfile .  | tee Dockerfile.monolithic.LOG
         #@@ docker tag lbnl-science-it/atlas tin6150/atlas
@@ -37,6 +45,12 @@ build via layers
         branch 
           - base: back to using r-base image, will have to do manual build on CentOS and push to docker hub for use on aws/ubuntu
           - altbase: resume work on finding alternate (non ubuntu) os base that has R 4.1 and can get apollo package in it.  no good solution at this point.
+
+
+
+
+
+
 	
 (see tin6150/r4eta for additional build commands)
 

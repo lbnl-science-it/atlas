@@ -46,15 +46,16 @@ ARG NO_COLOR=1
 ## also use different OS than debian that stock r-base container use
 ## see if circumvent problem with ghcr.io built image
 
-RUN echo  ''  ;\
-    touch _TOP_DIR_OF_CONTAINER_  ;\
-    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
-    export TERM=dumb      ;\
-    export NO_COLOR=TRUE  ;\
-    apt-get update ;\
-    apt-get -y --quiet install r-base ;\
-    cd /    ;\
-    echo ""  
+## this stanza below should be disabled when building FROM: r-base:4.1.1
+#RUN echo  ''  ;\
+#    touch _TOP_DIR_OF_CONTAINER_  ;\
+#    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+#    export TERM=dumb      ;\
+#    export NO_COLOR=TRUE  ;\
+#    #XXapt-get update ;\  # dont update, dont want r 4.1.2
+#    #XX apt-get -y --quiet install r-base ;\
+#    cd /    ;\
+#    echo ""  
 
 RUN echo  ''  ;\
     touch _TOP_DIR_OF_CONTAINER_  ;\
@@ -63,7 +64,7 @@ RUN echo  ''  ;\
     echo "installing packages via apt"       | tee -a _TOP_DIR_OF_CONTAINER_  ;\
     export TERM=dumb      ;\
     export NO_COLOR=TRUE  ;\
-    apt-get update ;\
+    #apt-get update ;\
     # ubuntu:   # procps provides uptime cmd
     apt-get -y --quiet install git file wget gzip bash less vim procps ;\
     apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
@@ -90,7 +91,7 @@ RUN echo  ''  ;\
     #-- apt-get --quiet install rstudio  ;\
     #xx apt-get -y --quiet install r-cran-rstudioapi libqt5gui5 libqt5network5  libqt5webenginewidgets5 qterminal net-tools ;\
     apt-get -y --quiet install apt-file ;\
-    apt-file update ;\
+    ##?? apt-file update ;\
     mkdir -p Downloads &&  cd Downloads ;\
     #xx wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
     #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;\
@@ -300,14 +301,15 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0203.0038 basic r-base"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0204.0052 basic r-base locked 4.1.1"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
-#- ENV TZ America/Los_Angeles  
+ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0204.0052 basic r-base locked 4.1.1"     
+ENV DBG_DOCKERFILE Dockerfile.base
+
 ENV TZ America/Los_Angeles 
 # ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
-#ENV DOCKERFILE Dockerfile[.cmaq]
-# does overwrite parent def of ENV DOCKERFILE
+# ENV does overwrite parent def of ENV, so can rewrite them as fit.
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values

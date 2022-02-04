@@ -1,4 +1,20 @@
 
+Testing the integration branch image:
+
+# 2022-0203: worked in Mint, not Zorin... base layer is build from CentOS machine and stored in hub.docker :-\
+# has R 4.1.2, verified to contain apollo, tidyverse
+docker pull                       ghcr.io/lbnl-science-it/atlas:v1.0.2
+docker run -it --entrypoint=bash  ghcr.io/lbnl-science-it/atlas:v1.0.2
+docker pull                       tin6150/atlas:v1.0.2
+docker pull                       ghcr.io/lbnl-science-it/atlas:integration # commit da35dd2 = v1.0.2
+
+docker tag ghcr.io/lbnl-science-it/atlas:v1.0.2 tin6150/atlas:v1.0.2
+docker push tin6150/atlas:v1.0.2
+
+
+
+~~~~~
+
 r for atlas eta project - dev notes
 
         #@@ docker build -t lbnl-science-it/atlas -f Dockerfile .  | tee Dockerfile.monolithic.LOG

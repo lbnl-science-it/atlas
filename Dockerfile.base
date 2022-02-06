@@ -348,7 +348,8 @@ ENV R_binary=/usr/lib/R/bin/exec/
 ## might need  . /usr/lib/R/etc/ldpaths
 
 #ENV R_LIBS=/usr/local/lib/R/site-library/
-ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
+ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
+# not sure if colon list works for R_LIBS 
 
 
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile

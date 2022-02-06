@@ -1,10 +1,10 @@
 #################Clean the data from Urbansim ###############
 #Read the original data from atlas_input/yearxxxx
-households <- read.table(file.path(inputdir, paste0('year',diryear),"households.csv"), header=T, sep=",")
-blocks <- read.table(file.path(inputdir,paste0('year',diryear),"blocks.csv"), header=T, sep=",")
-persons <- read.table(file.path(inputdir, paste0('year',diryear),"persons.csv"), header=T, sep=",")
-residential <- read.table(file.path(inputdir, paste0('year',diryear),"residential.csv"), header=T, sep=",")
-jobs <- read.table(file.path(inputdir, paste0('year',diryear),"jobs.csv"), header=T, sep=",")
+households <- read.table(file.path(inputdir, paste0('year',outputyear),"households.csv"), header=T, sep=",")
+blocks <- read.table(file.path(inputdir,paste0('year',outputyear),"blocks.csv"), header=T, sep=",")
+persons <- read.table(file.path(inputdir, paste0('year',outputyear),"persons.csv"), header=T, sep=",")
+residential <- read.table(file.path(inputdir, paste0('year',outputyear),"residential.csv"), header=T, sep=",")
+jobs <- read.table(file.path(inputdir, paste0('year',outputyear),"jobs.csv"), header=T, sep=",")
 
 # correct the error of person_id column name
 if(names(persons)[1] == 'X'){persons = persons %>% rename(person_id = X)}

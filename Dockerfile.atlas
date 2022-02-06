@@ -17,9 +17,11 @@
 
 # ghcr.io/lbnl-science-it/atlas are automated build using an ubuntu container, which works for CentOS, but in aws/ubuntu R won't start
 # tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
-#FROM ghcr.io/lbnl-science-it/atlas:base
+# df4724d Dockerfile.base w/ Deb11 + apt update +  R_HOME etc ENV ... got R 4.0.4, apollo, tidyverse, and R loads in Mint(U16.04), so testing atlas 1.0.2dcf  2022.0406
+FROM ghcr.io/lbnl-science-it/atlas:base
+
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
-FROM tin6150/atlas:base
+#FROM tin6150/atlas:base
 MAINTAINER Tin (at) LBL.gov
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -80,10 +82,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Atlas v1.0.2 data clean fix -- Dockerfile.atlas 2022.0205.0411"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Atlas v1.0.2 data clean fix -- Dockerfile.atlas 2022.0206.0d11"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
-ENV DBG_ATLAS_VER       "Atlas v1.0.2 data clean fix-- Docker.atlas 2022.0205.0411"
+ENV DBG_ATLAS_VER       "Atlas v1.0.2 data clean fix-- Docker.atlas 2022.0206.0d11"
 #// ENV DBG_ATLAS_VER       "Atlas v1.0.2 data clean fix-- Docker.atlas 2022.0205.0411 (on direct R-base, at 4.1.1)"
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 

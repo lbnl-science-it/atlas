@@ -3,7 +3,7 @@
 # base is now OS, R-base, and necessary R libraries from CRAN
 # atlas is a l2 (layer 2) that have atlas R code (and possibly a few add on CRAN packages)
 # mostly:
-# docker build -t tin6150/atlas:r412 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0074.r412ex4
+# docker build -f Dockerfile.base .  | tee LOG.Dockerfile-base.txt
 # see DevNotes.rst for more build details
 
 # branch specific settings:
@@ -13,6 +13,17 @@
 # rscript has its own set of fairly long install...
 # (model after tin6150/r4eta container)
  
+#### 0204 state
+#### tin6150/integrationU102 works, build on old integrationU that I don't remember how it was assembled.
+#### maybe not old hub.docker build work and ghcr.io build doesn't (R won't start)
+#### but because back then tidyverse installed correctly, which depends on like curl, httr, gargle, rvest, googledrive, goglesheets4, etc
+#### FROM:r-base:4.1.1 has missing tidyverse
+#### FROM:r-base:4.1.2 R won't start
+
+#### R 4.1 in these ubuntu https://cloud.r-project.org/bin/linux/ubuntu/
+# docker build -t tin6150/atlas:r412 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0074.r412ex4  # no good
+# docker build -t tin6150/atlas:u1604 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0080.u1604ex4
+
 
 # r-base:3.6.3 was last of 3.x, ca 2019
 # r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu.  back to this as did not find workable alternative, so back to this.
@@ -20,8 +31,10 @@
 #FROM r-base:4.0.3
 #FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
 			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
-FROM r-base:4.1.2
+#FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
 
+# 16.04.3 LTS used by aws/ubuntu instance
+FROM ubuntu:16.04
 #FROM ubuntu:21.04       # R still don't work in aws instance
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bulleye     # https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
@@ -49,15 +62,15 @@ ARG NO_COLOR=1
 ## see if circumvent problem with ghcr.io built image
 
 ## this stanza below should be disabled when building FROM: r-base:4.1.1
-#RUN echo  ''  ;\
-#    touch _TOP_DIR_OF_CONTAINER_  ;\
-#    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
-#    export TERM=dumb      ;\
-#    export NO_COLOR=TRUE  ;\
+RUN echo  ''  ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
 #    #XXapt-get update ;\  # dont update, dont want r 4.1.2
-#    #XX apt-get -y --quiet install r-base ;\
-#    cd /    ;\
-#    echo ""  
+    #XX apt-get -y --quiet install r-base ;\
+    cd /    ;\
+    echo ""  
 
 RUN echo  ''  ;\
     touch _TOP_DIR_OF_CONTAINER_  ;\
@@ -98,18 +111,6 @@ RUN echo  ''  ;\
     #xx wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
     #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;\
     cd /    ;\
-    echo ""  
-
-RUN echo ''  ;\
-    echo '==================================================================' ;\
-    echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
-    apt-get -y --quiet install git-all  ;\
-    test -d /opt/gitrepo  || mkdir -p /opt/gitrepo        ;\
-    ### cd /opt/gitrepo       ;\
-    #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
-    ### test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
-    #xx cd /opt/gitrepo/atlas &&  git pull             ;\
-    cd /     ;\
     echo ""  
 
 
@@ -286,27 +287,44 @@ RUN echo ''  ;\
     date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
     echo "Dockerfile" | tee  _CONTAINER_lbnl-science-it_atlas_  ;\
     cd /     ;\
-    # tmp for test with Ling's tmp code
-    mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
-    mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    #-- these are left for layer 2 container build, eg in Dockerfile.atlas
+    #-- mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
+    #-- mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
     pwd  ;\
     echo ""
 
-#++ some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
+#-- some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
 
-# this is now done by Dockerfile.atlas, ie layer 2 docker image add on build process.
-#xxCOPY . /
-#COPY . /opt/gitrepo/atlas
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    apt-get -y --quiet install git git-all  ;\
+    test -d /opt/gitrepo            || mkdir -p /opt/gitrepo             ;\
+    test -d /opt/gitrepo/atlas-base || mkdir -p /opt/gitrepo/atlas-base  ;\
+    test -d /opt/gitrepo/container  || mkdir -p /opt/gitrepo/container   ;\
+    cd /opt/gitrepo/container             ;\
+    git branch > git.branch.out.txt       ;\
+    git log --oneline --graph --decorate > git.lol.out.txt       ;\
+    #--echo "--------" | tee -a _TOP_DIR_OF_CONTAINER_           ;\
+    #--echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
+    #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
+    ### test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
+    #xx cd /opt/gitrepo/atlas &&  git pull             ;\
+    cd /     ;\
+    echo ""  
 
+# add some marker of how Docker was build.
+COPY Dockerfile* /opt/gitrepo/container/
+COPY .           /opt/gitrepo/atlas-base/
+# above tmp, maybe remove above once have a stable base with working R, apollo and tidyverse
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0204.0074.r412 basic r-base at 4.1.2"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0204.0075.u1604 ubuntu + R 4.1"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
-ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0204.0074.r412 basic r-base at 4.1.2"     
+ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0204.0074.u1604 ubuntu + R 4.1"     
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -324,7 +342,7 @@ ENV DBG_ATLAS_VER       "2022.0203.0038 basic r-base"
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
-#ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/Model_application_hima.R" ]
+#ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/main.R" ]
 #ENTRYPOINT [ "Rscript", "/main.R" ]
 ENTRYPOINT [ "R" ]
 # if no defined ENTRYPOINT, default to bash inside the container

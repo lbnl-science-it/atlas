@@ -52,7 +52,6 @@ ARG TZ=PST8PDT
 #https://no-color.org/
 ARG NO_COLOR=1
 
-#ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
 
 ## base branch, rebuild with r-base
 ## and core packages
@@ -67,8 +66,9 @@ RUN echo  ''  ;\
     echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
     export TERM=dumb      ;\
     export NO_COLOR=TRUE  ;\
-#    #XXapt-get update ;\  # dont update, dont want r 4.1.2
-    #XX apt-get -y --quiet install r-base ;\
+    # didn't want to update, dont want r 4.1.2, but then can't get curl, etc needed by tidyverse ;\
+    apt-get update ;\  
+    apt-get -y --quiet install r-base ;\
     cd /    ;\
     echo ""  
 
@@ -321,10 +321,11 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0204.0075.u1604 ubuntu + R 4.1"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0205.0075.u1604 ubuntu + R 4.1"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
 ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0204.0074.u1604 ubuntu + R 4.1"     
+ENV DBG_ATLAS_VER       "2022.0205.0038 basic r-base"
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -333,7 +334,23 @@ ENV TZ America/Los_Angeles
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
-ENV DBG_ATLAS_VER       "2022.0203.0038 basic r-base"
+
+
+# unsure how to append/add to PATH?  likely have to manually rewrite the whole ENV var
+#ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
+ENV  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# above is PATH in :integrationU where R 4.1.1 on Debian 11  works on Ubuntu 16.04 path
+# no LIB path or R env of any sort...
+# below is from bash -x /usr/bin/R
+ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
+ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
+ENV R_binary=/usr/lib/R/bin/exec/
+## might need  . /usr/lib/R/etc/ldpaths
+
+#ENV R_LIBS=/usr/local/lib/R/site-library/
+ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
+
+
 # setting R_LIBS here not needed, it get stored in /etc/r.../profile
 #ENV R_LIBS              /usr/local/lib/R/site-library/
 ##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
@@ -344,6 +361,9 @@ ENV DBG_ATLAS_VER       "2022.0203.0038 basic r-base"
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
 #ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/main.R" ]
 #ENTRYPOINT [ "Rscript", "/main.R" ]
-ENTRYPOINT [ "R" ]
+#ENTRYPOINT [ "R" ]
+ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
+
+# vim: shiftwidth=4 tabstop=4 formatoptions-=cro nolist nu syntax=on

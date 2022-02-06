@@ -33,11 +33,14 @@
 			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
 #FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
 
-# 16.04.3 LTS used by aws/ubuntu instance
-FROM ubuntu:16.04
-#FROM ubuntu:21.04       # R still don't work in aws instance
+# 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
+#FROM ubuntu:16.04
+#ubuntu:21.04   previously R still don't work in aws instance, TBD: try with bunch of R ENV (but doing debian:bulleye first)
+#FROM ubuntu:21.04
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bulleye     # https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
+# try to apt update and may bet R 4.1.x ?  now with bunch of R ENV
+FROM debian:bulleye     
 
 # https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
 # debian:testing-slim # aka testing-20220125-slim , which results to "Debian GNU/Linux bookworm/sid" # -slim remove man pages and other things not needed in container.  this has R 4.1.2-1 and R no longer works in Ubuntu/Zorin :-\ 
@@ -345,6 +348,7 @@ ENV  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_binary=/usr/lib/R/bin/exec/
+ENV R_HOME=/usr/lib/R
 ## might need  . /usr/lib/R/etc/ldpaths
 
 #ENV R_LIBS=/usr/local/lib/R/site-library/

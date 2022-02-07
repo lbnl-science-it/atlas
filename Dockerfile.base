@@ -32,11 +32,13 @@
 #FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
 			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
 #FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
+#FROM r-base:4.1.2	# retrying with apt update and R_HOME env and ENTRYPOINT of /usr/lib/R/bin/exec/R , which seemed key 0206
+FROM r-base:4.1.2	
 
 # 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
 #FROM ubuntu:16.04
-#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update 
-FROM ubuntu:21.04
+#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R
+#FROM ubuntu:21.04
 
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
@@ -368,6 +370,7 @@ ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/libr
 #ENTRYPOINT [ "Rscript", "/main.R" ]
 #ENTRYPOINT [ "R" ]
 ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
+# full path to R likely key to have it work in Ubuntu 16.04 host
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
 

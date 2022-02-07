@@ -32,13 +32,13 @@
 #FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
 			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
 #FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
-#FROM r-base:4.1.2	# retrying with apt update and R_HOME env and ENTRYPOINT of /usr/lib/R/bin/exec/R , which seemed key 0206
-FROM r-base:4.1.2	
+#FROM r-base:4.1.2	# retrying with apt update and R_HOME env and ENTRYPOINT of /usr/lib/R/bin/exec/R .  NOPE.  R direct from r-base use bookworm/sid, sid is a testing branch, Rscript /main.R doesn't work here, not even after setting PATH (in interactive container)
+#FROM r-base:4.1.2	
 
 # 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
 #FROM ubuntu:16.04
-#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R
-#FROM ubuntu:21.04
+#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  Check Rscript /main.R in upper layer TBD #0207
+FROM ubuntu:21.04
 
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
@@ -327,10 +327,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0206.1715.u2104 ubuntu + update + R_ENV"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0207.u2104 ubuntu + update + R_ENV"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0206.1715.u2104 ubuntu + update + R_ENV"     
+ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0207.u2104 ubuntu + update + R_ENV"     
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -340,28 +340,30 @@ ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
 ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
 ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
 
+ENV TEST_DOCKER_ENV_YEQ1="Dockerfile ENV assignment as foo=bar, yes use of ="
+ENV TEST_DOCKER_ENV_NEQ1 "Dockerfile ENV assignment as foo bar, no  use of =, both seems to work"
+
 
 # unsure how to append/add to PATH?  likely have to manually rewrite the whole ENV var
 #ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
-ENV  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # above is PATH in :integrationU where R 4.1.1 on Debian 11  works on Ubuntu 16.04 path
-# no LIB path or R env of any sort...
+# below PATH doesn't help resolve Rscript /main.R not finding R problem, but it should not hurt.
+ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # below is from bash -x /usr/bin/R
 ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_binary=/usr/lib/R/bin/exec/
 ENV R_HOME=/usr/lib/R
-## might need  . /usr/lib/R/etc/ldpaths
+## ? might need  . /usr/lib/R/etc/ldpaths
 
+# setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile
+# not sure if colon list work anyway
+# but had lot of problem with R directly from R-base or Debian test branch, so fording them 
+#ENV R_LIBS              /usr/local/lib/R/site-library/
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  
 #ENV R_LIBS=/usr/local/lib/R/site-library/
 ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
-# not sure if colon list works for R_LIBS 
 
-
-# setting R_LIBS here not needed, it get stored in /etc/r.../profile
-#ENV R_LIBS              /usr/local/lib/R/site-library/
-##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  # not sure if colon list work anyway
-# but how to append, eg add to PATH?
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]

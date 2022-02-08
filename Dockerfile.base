@@ -37,7 +37,7 @@
 
 # 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
 #FROM ubuntu:16.04
-#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  Check Rscript /main.R in upper layer TBD #0207
+#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  BUT Rscript /main.R complains as equiv of test -x /usr/lib/R  fails for no obvious reason.
 FROM ubuntu:21.04
 
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
@@ -307,9 +307,9 @@ RUN echo ''  ;\
     test -d /opt/gitrepo            || mkdir -p /opt/gitrepo             ;\
     test -d /opt/gitrepo/atlas-base || mkdir -p /opt/gitrepo/atlas-base  ;\
     test -d /opt/gitrepo/container  || mkdir -p /opt/gitrepo/container   ;\
-    cd /opt/gitrepo/container             ;\
-    git branch > git.branch.out.txt       ;\
-    git log --oneline --graph --decorate > git.lol.out.txt       ;\
+    git branch |tee /opt/gitrepo/container/git.branch.out.txt            ;\
+    git log --oneline --graph --decorate | tee /opt/gitrepo/container/git.lol.out.txt       ;\
+    #xx cd /opt/gitrepo/container             ;\
     #--echo "--------" | tee -a _TOP_DIR_OF_CONTAINER_           ;\
     #--echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
     #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
@@ -348,12 +348,15 @@ ENV TEST_DOCKER_ENV_NEQ1 "Dockerfile ENV assignment as foo bar, no  use of =, bo
 #ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
 # above is PATH in :integrationU where R 4.1.1 on Debian 11  works on Ubuntu 16.04 path
 # below PATH doesn't help resolve Rscript /main.R not finding R problem, but it should not hurt.
-ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#-- ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#-- unset path to ensure it didn't make Rscript behave worse cuz somehow "test" got masked/lost
+
 # below is from bash -x /usr/bin/R
 ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_binary=/usr/lib/R/bin/exec/
 ENV R_HOME=/usr/lib/R
+ENV R_HOME=/usr/lib/R/bin/exec/R
 ## ? might need  . /usr/lib/R/etc/ldpaths
 
 # setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile
@@ -375,5 +378,25 @@ ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
 # full path to R likely key to have it work in Ubuntu 16.04 host
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
+
+
+# Rscript is ELF binary, verbose debug:
+# Rscript -e 'q()' --verbose
+# running
+#  '/usr/lib/R/bin/R --no-echo --no-restore -e q()'
+# ERROR: R_HOME ('/usr/lib/R') not found
+# that's cuz R actually tries to 
+# "test -x /usr/lib/R" 
+# which fails (ie return 1) for no obvious reason (dir is a+x).
+# 
+# problem seems to be that 
+# which test 
+# is actualy not found.  
+# /usr/bin/test -x /usr/lib/R returns 0
+# while /usr/bin/R can be fixed with the path, Rscript still barf
+# and problem may actually be something else...
+# same container run on Mint 20.1 works file.  bizarre.
+# if container has newer kernel than host then it is problem??
+
 
 # vim: shiftwidth=4 tabstop=4 formatoptions-=cro nolist nu syntax=on

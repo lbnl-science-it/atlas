@@ -38,12 +38,12 @@
 # 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
 #FROM ubuntu:16.04
 #ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  BUT Rscript /main.R complains as equiv of test -x /usr/lib/R  fails for no obvious reason.
-FROM ubuntu:21.04
+#xxxx FROM ubuntu:21.04
 
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
 #FROM debian:bullseye     # ie 11 with update get R 4.0.4-1, container set R_ENV and R starts.  apollo and tidyverse avail.  maybe usable for atlas (eg v1.0.2dcf)
-#FROM debian:bullseye     
+FROM debian:bullseye     
 
 # https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
 # debian:testing-slim # aka testing-20220125-slim , which results to "Debian GNU/Linux bookworm/sid" # -slim remove man pages and other things not needed in container.  this has R 4.1.2-1 and R no longer works in Ubuntu/Zorin :-\ 
@@ -327,10 +327,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0207.u2104 ubuntu + update + R_ENV"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0207.1952 d11 + update + R_ENV no path"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0207.u2104 ubuntu + update + R_ENV"     
+ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0207.1952.d11 + update + R_ENV NO PATH"     
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -374,8 +374,10 @@ ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/libr
 #ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/main.R" ]
 #ENTRYPOINT [ "Rscript", "/main.R" ]
 #ENTRYPOINT [ "R" ]
-ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
+#ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
+ENTRYPOINT [ "/usr/bin/R" ]
 # full path to R likely key to have it work in Ubuntu 16.04 host
+# but if /usr/bin/R doesn't work, then Rscript dont, cuz the test -x it does somehow need this set.
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
 

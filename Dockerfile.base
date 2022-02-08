@@ -20,6 +20,9 @@
 #### FROM:r-base:4.1.1 has missing tidyverse
 #### FROM:r-base:4.1.2 R won't start
 
+#### 0207 solution for now -- 3e1332b :base104
+#### use Debian 11, apt update, get R 4.0.4, has apollo and tidyverse, seems to work for Atlas 1.0.4
+
 #### R 4.1 in these ubuntu https://cloud.r-project.org/bin/linux/ubuntu/
 # docker build -t tin6150/atlas:r412 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0074.r412ex4  # no good
 # docker build -t tin6150/atlas:u1604 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0080.u1604ex4
@@ -42,7 +45,7 @@
 
 #FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
 #FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
-#FROM debian:bullseye     # ie 11 with update get R 4.0.4-1, container set R_ENV and R starts.  apollo and tidyverse avail.  maybe usable for atlas (eg v1.0.2dcf)
+#FROM debian:bullseye     # ie 11 with update get R 4.0.4-1, container set R_ENV and R starts.  apollo and tidyverse avail.  No PATH ENV, Rscript works.  atlas:v1.0.4 worked for Zorin/U1604, add :vBase1.0.4 and this will be the gold base image for now.
 FROM debian:bullseye     
 
 # https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
@@ -307,8 +310,9 @@ RUN echo ''  ;\
     test -d /opt/gitrepo            || mkdir -p /opt/gitrepo             ;\
     test -d /opt/gitrepo/atlas-base || mkdir -p /opt/gitrepo/atlas-base  ;\
     test -d /opt/gitrepo/container  || mkdir -p /opt/gitrepo/container   ;\
-    git branch |tee /opt/gitrepo/container/git.branch.out.txt            ;\
-    git log --oneline --graph --decorate | tee /opt/gitrepo/container/git.lol.out.txt       ;\
+    #the git command dont produce output, thought container run on the dir squatting on the git files.  COPY works... oh well
+    #git branch |tee /opt/gitrepo/container/git.branch.out.txt            ;\
+    #git log --oneline --graph --decorate | tee /opt/gitrepo/container/git.lol.out.txt       ;\
     #xx cd /opt/gitrepo/container             ;\
     #--echo "--------" | tee -a _TOP_DIR_OF_CONTAINER_           ;\
     #--echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
@@ -327,10 +331,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0207.1952 d11 + update + R_ENV no path"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0207.1953 d11 + update + R_ENV no path"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_VER       "Dockerfile.base 2022.0207.1952.d11 + update + R_ENV NO PATH"     
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update + R_ENV NO PATH"     
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -355,8 +359,9 @@ ENV TEST_DOCKER_ENV_NEQ1 "Dockerfile ENV assignment as foo bar, no  use of =, bo
 ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
 ENV R_binary=/usr/lib/R/bin/exec/
-ENV R_HOME=/usr/lib/R
-ENV R_HOME=/usr/lib/R/bin/exec/R
+#xx ENV R_HOME=/usr/lib/R
+#xx ENV R_HOME=/usr/lib/R/bin/exec/R
+### R barf with warning that it ignores R_HOME env settings
 ## ? might need  . /usr/lib/R/etc/ldpaths
 
 # setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile

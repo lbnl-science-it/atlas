@@ -1,20 +1,57 @@
 # Dockerfile for creating R container 
 # and add specific library needed by projects by LBNL/ETA
-# base layer is OS, R, CRAN libaries.
+# base is now OS, R-base, and necessary R libraries from CRAN
 # atlas is a l2 (layer 2) that have atlas R code (and possibly a few add on CRAN packages)
 # mostly:
 # docker build -f Dockerfile.base .  | tee LOG.Dockerfile-base.txt
 # see DevNotes.rst for more build details
 
-# Hist.Dockerfile.base has historical version of many OS tried and their pitfals. or see git commit 3e1332b
-
 # branch specific settings:
 # base: Dockerfile -> Dockerfile.base
 # main: Dockerfile -> Dockerfile.atlas # ie layer 2 that build on top of Dockerfile.base
 
-#FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
+# rscript has its own set of fairly long install...
+# (model after tin6150/r4eta container)
+ 
+#### 0204 state
+#### tin6150/integrationU102 works, build on old integrationU that I don't remember how it was assembled.
+#### maybe not old hub.docker build work and ghcr.io build doesn't (R won't start)
+#### but because back then tidyverse installed correctly, which depends on like curl, httr, gargle, rvest, googledrive, goglesheets4, etc
+#### FROM:r-base:4.1.1 has missing tidyverse
+#### FROM:r-base:4.1.2 R won't start
 
+#### 0207 solution for now -- 3e1332b :base104
+#### use Debian 11, apt update, get R 4.0.4, has apollo and tidyverse, seems to work for Atlas 1.0.4
+
+#### R 4.1 in these ubuntu https://cloud.r-project.org/bin/linux/ubuntu/
+# docker build -t tin6150/atlas:r412 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0074.r412ex4  # no good
+# docker build -t tin6150/atlas:u1604 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0080.u1604ex4
+
+
+# r-base:3.6.3 was last of 3.x, ca 2019
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu.  back to this as did not find workable alternative, so back to this.
+#FROM r-base:3.6.3
+#FROM r-base:4.0.3
+#FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
+			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
+#FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
+#FROM r-base:4.1.2	# retrying with apt update and R_HOME env and ENTRYPOINT of /usr/lib/R/bin/exec/R .  NOPE.  R direct from r-base use bookworm/sid, sid is a testing branch, Rscript /main.R doesn't work here, not even after setting PATH (in interactive container)
+#FROM r-base:4.1.2	
+
+# 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
+#FROM ubuntu:16.04
+#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  BUT Rscript /main.R complains as equiv of test -x /usr/lib/R  fails for no obvious reason.
+#xxxx FROM ubuntu:21.04
+
+#FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
+#FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
+#FROM debian:bullseye     # ie 11 with update get R 4.0.4-1, container set R_ENV and R starts.  apollo and tidyverse avail.  No PATH ENV, Rscript works.  atlas:v1.0.4 worked for Zorin/U1604, add :vBase1.0.4 and this will be the gold base image for now.
 FROM debian:bullseye     
+
+# https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
+# debian:testing-slim # aka testing-20220125-slim , which results to "Debian GNU/Linux bookworm/sid" # -slim remove man pages and other things not needed in container.  this has R 4.1.2-1 and R no longer works in Ubuntu/Zorin :-\ 
+#FROM debian:testing-slim
+
 
 MAINTAINER Tin (at) LBL.gov
 ARG DEBIAN_FRONTEND=noninteractive
@@ -25,12 +62,20 @@ ARG TZ=PST8PDT
 ARG NO_COLOR=1
 
 
+## base branch, rebuild with r-base
+## and core packages
+## then atlas code can be build on top of this
+## reduce build time for small changes
+## also use different OS than debian that stock r-base container use
+## see if circumvent problem with ghcr.io built image
+
 ## this stanza below should be disabled when building FROM: r-base:4.1.1
 RUN echo  ''  ;\
     touch _TOP_DIR_OF_CONTAINER_  ;\
     echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
     export TERM=dumb      ;\
     export NO_COLOR=TRUE  ;\
+    # didn't want to update, dont want r 4.1.2, but then can't get curl, etc needed by tidyverse ;\
     apt-get update ;\  
     apt-get -y --quiet install r-base ;\
     cd /    ;\
@@ -257,6 +302,7 @@ RUN echo ''  ;\
     pwd  ;\
     echo ""
 
+#-- some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
 
 RUN echo ''  ;\
     echo '==================================================================' ;\
@@ -267,6 +313,7 @@ RUN echo ''  ;\
     #the git command dont produce output, thought container run on the dir squatting on the git files.  COPY works... oh well
     #git branch |tee /opt/gitrepo/container/git.branch.out.txt            ;\
     #git log --oneline --graph --decorate | tee /opt/gitrepo/container/git.lol.out.txt       ;\
+    #xx cd /opt/gitrepo/container             ;\
     #--echo "--------" | tee -a _TOP_DIR_OF_CONTAINER_           ;\
     #--echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
     #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
@@ -277,15 +324,17 @@ RUN echo ''  ;\
 
 # add some marker of how Docker was build.
 COPY Dockerfile* /opt/gitrepo/container/
+COPY .           /opt/gitrepo/atlas-base/
+# above tmp, maybe remove above once have a stable base with working R, apollo and tidyverse
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0207.1953 d11 + update GOLD_BASE104"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0207.1953 d11 + update + R_ENV no path"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update GOLD_BASE104"     
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update + R_ENV NO PATH"     
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles 
@@ -313,7 +362,7 @@ ENV R_binary=/usr/lib/R/bin/exec/
 #xx ENV R_HOME=/usr/lib/R
 #xx ENV R_HOME=/usr/lib/R/bin/exec/R
 ### R barf with warning that it ignores R_HOME env settings
-##  No need: . /usr/lib/R/etc/ldpaths
+## ? might need  . /usr/lib/R/etc/ldpaths
 
 # setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile
 # not sure if colon list work anyway
@@ -324,6 +373,7 @@ ENV R_binary=/usr/lib/R/bin/exec/
 ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
 
 
+#ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]
 #ENTRYPOINT [ "/usr/bin/rstudio" ]
 #ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/main.R" ]
@@ -335,6 +385,25 @@ ENTRYPOINT [ "/usr/bin/R" ]
 # but if /usr/bin/R doesn't work, then Rscript dont, cuz the test -x it does somehow need this set.
 # if no defined ENTRYPOINT, default to bash inside the container
 # careful not to cover /home/username (for this container)
+
+
+# Rscript is ELF binary, verbose debug:
+# Rscript -e 'q()' --verbose
+# running
+#  '/usr/lib/R/bin/R --no-echo --no-restore -e q()'
+# ERROR: R_HOME ('/usr/lib/R') not found
+# that's cuz R actually tries to 
+# "test -x /usr/lib/R" 
+# which fails (ie return 1) for no obvious reason (dir is a+x).
+# 
+# problem seems to be that 
+# which test 
+# is actualy not found.  
+# /usr/bin/test -x /usr/lib/R returns 0
+# while /usr/bin/R can be fixed with the path, Rscript still barf
+# and problem may actually be something else...
+# same container run on Mint 20.1 works file.  bizarre.
+# if container has newer kernel than host then it is problem??
 
 
 # vim: shiftwidth=4 tabstop=4 formatoptions-=cro nolist nu syntax=on

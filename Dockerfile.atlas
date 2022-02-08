@@ -18,7 +18,8 @@
 # ghcr.io/lbnl-science-it/atlas are automated build using an ubuntu container, which works for CentOS, but in aws/ubuntu R won't start
 # tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
 # df4724d Dockerfile.base w/ Deb11 + apt update +  R_HOME etc ENV ... got R 4.0.4, apollo, tidyverse, and R loads in Mint(U16.04), so testing atlas 1.0.2dcf  2022.0406
-# d785134 Dockerfile.base direct R 412 + apt update + R_HOME etc ENV #0206.  Rscript did not work, try update PATH
+# d785134 Dockerfile.base direct R 412 + apt update + R_HOME etc ENV #0206.  Rscript did not work, add PATH ENV didn't help, so rebuild after a new atlas:base is back to ubuntu 21.04.  here R works, but not Rscript, cuz test -x /usr/lib/R returns 1 :-\
+# 3e1332b Debian bullseye (11) no PATH R 4.0.4
 FROM ghcr.io/lbnl-science-it/atlas:base
 
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
@@ -48,10 +49,10 @@ RUN echo ''  ;\
     echo '==================================================================' ;\
     echo 'capturing container build info                                    ' ;\
     test -d /opt/gitrepo  || mkdir -p /opt/gitrepo        ;\
-    test -d /opt/gitrepo/container_layer2  || mkdir -p /opt/gitrepo/container_layer2        ;\
-    cd /opt/gitrepo/container_layer2           ;\
-    git branch |tee git.branch.out.txt         ;\
-    git log --oneline --graph --decorate > git.lol.out.txt       ;\
+    test -d /opt/gitrepo/container_layer2  || mkdir -p /opt/gitrepo/container_layer2          ;\
+    git branch | tee /opt/gitrepo/container_layer2/git.branch.out.txt                          ;\
+    git log --oneline --graph --decorate | tee /opt/gitrepo/container_layer2/git.lol.out.txt  ;\
+    # cd /opt/gitrepo/container_layer2           ;\
     cd /     ;\
     echo ""  
 
@@ -83,23 +84,15 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Atlas v1.0.2 data clean fix -- Dockerfile.atlas 2022.0206.1715 u2104 r412"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Atlas v1.0.4 -- Dockerfile.atlas 2022.0207.2146 d11   r404"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale Dockerfile.atlas"
 
-ENV DBG_ATLAS_VER       "Atlas v1.0.2 data clean fix-- Docker.atlas 2022.0206.1715 u2104 r412"
-#// ENV DBG_ATLAS_VER       "Atlas v1.0.2 data clean fix-- Docker.atlas 2022.0205.0411 (on direct R-base, at 4.1.1)"
+ENV DBG_ATLAS_VER "Atlas v1.0.4 -- Docker.atlas 2022.0207.2146 d11 r404"
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
-# ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
-# ENV does overwrite parent def of ENV, so can rewrite them as fit.
-ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
-ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
-ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
 
-ENV TEST_DOCKER_ENV_YEQ2="Dockerfile ENV assignment as foo=bar, yes use of ="
-ENV TEST_DOCKER_ENV_NEQ2 "Dockerfile ENV assignment as foo bar, no  use of =, both seems to work"
-ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-## tmp overwrite PATH to test if this fix Rscript to work, promote to base layer if works.
+#xx ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+## tmp overwrite PATH to test if this fix Rscript to work, did not work, maybe made it worse?  Ubuntu 21.04 test -x /usr/lib/R return 1 which is why R fails to run
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]

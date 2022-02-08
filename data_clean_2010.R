@@ -37,7 +37,7 @@ households <- households %>% mutate(HHSIZE1 = case_when(persons == 1 ~ 1, TRUE~0
                                     HHSIZE3 = case_when(persons == 3 ~ 1, TRUE~0),
                                     HHSIZE4 = case_when(persons >= 4 ~ 1, TRUE~0))
 households$HHSIZE <- households$persons
-#	Own		        - Household own the house (homeown)
+#	Own		        - Household own the house (homeown) 1 ~ own, 0-rent
 households <- households %>% mutate(hhown = case_when(tenure == 1 ~ 1, TRUE~0))
 #	WORK0		      - Zero worker household
 #	WORK1		      - One worker household
@@ -94,8 +94,16 @@ households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)
 # Geolocation data
 # rent percentage by tract
 residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
-perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
-                                                            renthouse = sum(tenure=="rent")) %>% mutate(perrent=renthouse/totalhouse)
+if(outputyear == 2010){
+  perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
+                                                              renthouse = sum(tenure=="rent")) %>% mutate(perrent=renthouse/totalhouse * 100)
+  
+}else{
+  # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
+  perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
+                                                              renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
+  
+}
 # perrent: precentage of rental housing is less than 25%
 perrent <- perrent %>% mutate(perrent1 = case_when(perrent < 25 ~ 1, TRUE~0),
                               perrent2 = case_when(perrent < 45 & perrent >=25 ~ 1, TRUE~0),

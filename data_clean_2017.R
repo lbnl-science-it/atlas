@@ -92,9 +92,9 @@ households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)
 # Geolocation data
 # rent percentage by tract
 residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
-# update 11.15
+# update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
 perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
-                                                            renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse)
+                                                            renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
 # perrent: precentage of rental housing is less than 25%
 perrent <- perrent %>% mutate(perrent1 = case_when(perrent < 25 ~ 1, TRUE~0),
                               perrent2 = case_when(perrent < 45 & perrent >=25 ~ 1, TRUE~0),

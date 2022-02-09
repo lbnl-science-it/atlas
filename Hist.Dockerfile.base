@@ -1,0 +1,409 @@
+# Dockerfile for creating R container 
+# and add specific library needed by projects by LBNL/ETA
+# base is now OS, R-base, and necessary R libraries from CRAN
+# atlas is a l2 (layer 2) that have atlas R code (and possibly a few add on CRAN packages)
+# mostly:
+# docker build -f Dockerfile.base .  | tee LOG.Dockerfile-base.txt
+# see DevNotes.rst for more build details
+
+# branch specific settings:
+# base: Dockerfile -> Dockerfile.base
+# main: Dockerfile -> Dockerfile.atlas # ie layer 2 that build on top of Dockerfile.base
+
+# rscript has its own set of fairly long install...
+# (model after tin6150/r4eta container)
+ 
+#### 0204 state
+#### tin6150/integrationU102 works, build on old integrationU that I don't remember how it was assembled.
+#### maybe not old hub.docker build work and ghcr.io build doesn't (R won't start)
+#### but because back then tidyverse installed correctly, which depends on like curl, httr, gargle, rvest, googledrive, goglesheets4, etc
+#### FROM:r-base:4.1.1 has missing tidyverse
+#### FROM:r-base:4.1.2 R won't start
+
+#### 0207 solution for now -- 3e1332b :base104
+#### use Debian 11, apt update, get R 4.0.4, has apollo and tidyverse, seems to work for Atlas 1.0.4
+
+#### R 4.1 in these ubuntu https://cloud.r-project.org/bin/linux/ubuntu/
+# docker build -t tin6150/atlas:r412 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0074.r412ex4  # no good
+# docker build -t tin6150/atlas:u1604 -f Dockerfile.base .  | tee LOG.Dockerfile-base.0204.0080.u1604ex4
+
+
+# r-base:3.6.3 was last of 3.x, ca 2019
+# r-base:4.1.1  # ca 2021.10, but gchr built image compatibility problem with ubuntu.  back to this as did not find workable alternative, so back to this.
+#FROM r-base:3.6.3
+#FROM r-base:4.0.3
+#FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
+			# though the ghcr.io...base worked in aws/ubuntu 16.04... 
+#FROM r-base:4.1.2	# R wont start in Ubuntu, only work in CentOS.  irrigardless if build on CentOS or ghcr.io cloud.
+#FROM r-base:4.1.2	# retrying with apt update and R_HOME env and ENTRYPOINT of /usr/lib/R/bin/exec/R .  NOPE.  R direct from r-base use bookworm/sid, sid is a testing branch, Rscript /main.R doesn't work here, not even after setting PATH (in interactive container)
+#FROM r-base:4.1.2	
+
+# 16.04.3 LTS used by aws/ubuntu instance, resulted in R 3.2.3, missing apollo, etc.
+#FROM ubuntu:16.04
+#ubuntu:21.04   previously R still don't work in aws instance, try with bunch of R ENV  + update ==> R 4.0.4 has apollo, tidyverse, R runs when invoked as  /usr/lib/R/bin/exec/R.  BUT Rscript /main.R complains as equiv of test -x /usr/lib/R  fails for no obvious reason.
+#xxxx FROM ubuntu:21.04
+
+#FROM debian:11          # R works in Mint, but only 4.0.1 and don't have pacman
+#FROM debian:bullseye     # ie 11 https://packages.debian.org/stable/gnu-r/ only have 4.0.4-1, so can't get apollo in it, and it is key to atlas.
+#FROM debian:bullseye     # ie 11 with update get R 4.0.4-1, container set R_ENV and R starts.  apollo and tidyverse avail.  No PATH ENV, Rscript works.  atlas:v1.0.4 worked for Zorin/U1604, add :vBase1.0.4 and this will be the gold base image for now.
+FROM debian:bullseye     
+
+# https://packages.debian.org/testing/gnu-r/ testing branch has 4.1.2-1  (bookworm, which may become 12?)
+# debian:testing-slim # aka testing-20220125-slim , which results to "Debian GNU/Linux bookworm/sid" # -slim remove man pages and other things not needed in container.  this has R 4.1.2-1 and R no longer works in Ubuntu/Zorin :-\ 
+#FROM debian:testing-slim
+
+
+MAINTAINER Tin (at) LBL.gov
+ARG DEBIAN_FRONTEND=noninteractive
+#ARG TERM=vt100
+ARG TERM=dumb
+ARG TZ=PST8PDT 
+#https://no-color.org/
+ARG NO_COLOR=1
+
+
+## base branch, rebuild with r-base
+## and core packages
+## then atlas code can be build on top of this
+## reduce build time for small changes
+## also use different OS than debian that stock r-base container use
+## see if circumvent problem with ghcr.io built image
+
+## this stanza below should be disabled when building FROM: r-base:4.1.1
+RUN echo  ''  ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
+    # didn't want to update, dont want r 4.1.2, but then can't get curl, etc needed by tidyverse ;\
+    apt-get update ;\  
+    apt-get -y --quiet install r-base ;\
+    cd /    ;\
+    echo ""  
+
+RUN echo  ''  ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "begining docker build process at " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a       _TOP_DIR_OF_CONTAINER_ ;\
+    echo "installing packages via apt"       | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
+    #apt-get update ;\
+    # ubuntu:   # procps provides uptime cmd
+    apt-get -y --quiet install git file wget gzip bash less vim procps ;\
+    apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
+    apt-get -y --quiet install openjdk-14-jre-headless   ;\ 
+    # gdal cran install fails, cuz no longer libgdal26, but now libgdal28
+    # apt-file search gdal-config
+    apt-get -y --quiet install gdal-bin gdal-data libgdal-dev  libgdal28  ;\
+    apt-get -y --quiet install r-cran-rgdal  ;\
+    apt-get -y --quiet install libgeos-dev   ;\
+    # default-jdk is what provide javac !   # -version = 11.0.6
+    # ref: https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-ubuntu-18-04
+    # update-alternatives --config java --skip-auto # not needed, but could run interactively to change jdk
+    apt-get -y --quiet install default-jdk r-cran-rjava  ;\ 
+    R CMD javareconf  ;\
+    # debian calls it libnode-dev (ubuntu call it libv8-dev?)
+    apt-get -y --quiet install libnode-dev libv8-dev ;\
+    cd /     ;\
+    echo ""  ;\
+    echo '==================================================================' ;\
+    echo "install for rstudio GUI (Qt)"      | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                                 ;\
+    echo '==================================================================' ;\
+    #-- rstudio dont seems to exist in Debian bullseye/sid :/
+    #-- apt-get --quiet install rstudio  ;\
+    #xx apt-get -y --quiet install r-cran-rstudioapi libqt5gui5 libqt5network5  libqt5webenginewidgets5 qterminal net-tools ;\
+    apt-get -y --quiet install apt-file ;\
+    ##?? apt-file update ;\
+    mkdir -p Downloads &&  cd Downloads ;\
+    #xx wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
+    #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;\
+    cd /    ;\
+    echo ""  
+
+
+RUN echo ''  ;\
+    cd   /   ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo "installing packages cran packages - part 1" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '' ;\
+    export TERM=dumb  ;\
+    # initialization1.R
+    Rscript --quiet --no-readline --slave -e 'install.packages("ggplot2",    repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("maps",    repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("dplyr",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("sf",  repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("fields",  repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("Imap",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("raster",  repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("readxl",    repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("ncdf4",   repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("rgdal", repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("ggmap",   repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("lawn",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("sp",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("shapefiles",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("tmap",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("spdplyr",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.1.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.1.txt   ;\
+    echo "Done installing packages cran packages - part 1" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                      ;\
+    echo ""
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo "installing packages cran packages - part 2" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '' ;\
+    export TERM=dumb  ;\
+    # initialization2.R
+    Rscript --quiet --no-readline --slave -e 'install.packages("MASS",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("reshape2",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("cowplot",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("corrplot",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("RColorBrewer",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("fmsb",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("ggmap",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("tictoc",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("stargazer",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("psych",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("GPArotation",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("cluster",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("factoextra",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("DandEFA",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("xtrable",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("psychTools",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("aCRM",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("clusterCrit",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("data.table",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("tigris",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("DAAG",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.2.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.2.txt   ;\
+    echo "Done installing packages cran packages - part 2" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                      ;\
+    echo ""
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo "installing packages cran packages - part 3" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo ''  ;\
+    export TERM=dumb  ;\
+    # initialization3.R
+    Rscript --quiet --no-readline --slave -e 'install.packages("RSQLite",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("rgeos",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("gpclib",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("utils",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("plyr",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("maptools",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("datamart",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("dismo",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("openair",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("broom",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("gridExtra",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("foreach",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("doParallel",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("sandwich",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("lmtest",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("cvTools",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("timeDate",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("lubridate",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("zoo",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("stringr",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("stringi",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("chron",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("proj4",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("akima",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("RColorBrewer",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("directlabels",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("FactoMineR",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("rstudioapi",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("iterators",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("doSNOW",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages("Hmisc",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.3.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.3.txt   ;\
+    echo "Done installing packages cran packages - part 3" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                      ;\
+    echo ""
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo "installing packages cran packages - part 4" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo '==================================================================' ;\
+    echo ''  ;\
+    export TERM=dumb  ;\
+    # from library() calls
+    Rscript --quiet --no-readline --slave -e 'install.packages(c("aCRM", "akima", "broom", "cluster", "clusterCrit", "corrplot", "DandEFA", "datamart", "data.table", "directlabels", "dismo", "dplyr", "factoextra", "FactoMineR", "fields", "fmsb", "gdata", "ggmap", "ggplot2", "ggthemes", "gpclib", "gridExtra", "Hmisc", "lubridate", "maps", "maptools", "ncdf", "ncdf4", "openair", "openxlsx", "proj4", "psych", "psychTools", "raster", "RColorBrewer", "readxl", "reshape2", "rgdal", "rgeos", "rJava", "rstudioapi", "scales", "sf", "sp", "stargazer", "stringi", "stringr", "tibble", "tictoc", "tidyr", "tigris", "timeDate", "tmap", "units", "utils", "xlsx", "xtable", "zoo"),     repos = "http://cran.us.r-project.org")'    ;\
+    # next one added 2021.0829 for Ling's parallel foreach SNOW cluster 
+    Rscript --quiet --no-readline --slave -e 'install.packages(c( "ster", "sp", "rgeos", "geosphere", "doParallel", "iterators", "foreach", "rgdal", "doSNOW", "openxlsx"),     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.4.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.4.txt   ;\
+    dpkg --list | tee dpkg--list.txt   ;\
+    echo "Done installing packages cran packages - part 4" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
+    echo ""
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    echo "installing packages cran packages - part 5" | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_                        ;\
+    echo '==================================================================' ;\
+    echo ''  ;\
+    export TERM=dumb  ;\
+		## additions by Tin
+    Rscript --quiet --no-readline --slave -e 'install.packages("tidycensus",     repos = "http://cran.us.r-project.org")'    ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;\
+    # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
+    # pacman provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, seems in R 4.0.3 now ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages( "pacman" )'       ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( snow, foreach, parallel, doParallel, tictoc ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( apollo ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( optparse, argparse, stats ) }' ;\
+    #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
+    #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;\
+
+    Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;\
+    ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.5.txt   ;\
+    echo "Done installing packages cran packages - part 5" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
+    date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
+    echo "Dockerfile" | tee  _CONTAINER_lbnl-science-it_atlas_  ;\
+    cd /     ;\
+    #-- these are left for layer 2 container build, eg in Dockerfile.atlas
+    #-- mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
+    #-- mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    pwd  ;\
+    echo ""
+
+#-- some of the atlas specific code should move to Dockkerfile.atlas ...  see how this goes first.
+
+RUN echo ''  ;\
+    echo '==================================================================' ;\
+    apt-get -y --quiet install git git-all  ;\
+    test -d /opt/gitrepo            || mkdir -p /opt/gitrepo             ;\
+    test -d /opt/gitrepo/atlas-base || mkdir -p /opt/gitrepo/atlas-base  ;\
+    test -d /opt/gitrepo/container  || mkdir -p /opt/gitrepo/container   ;\
+    #the git command dont produce output, thought container run on the dir squatting on the git files.  COPY works... oh well
+    #git branch |tee /opt/gitrepo/container/git.branch.out.txt            ;\
+    #git log --oneline --graph --decorate | tee /opt/gitrepo/container/git.lol.out.txt       ;\
+    #xx cd /opt/gitrepo/container             ;\
+    #--echo "--------" | tee -a _TOP_DIR_OF_CONTAINER_           ;\
+    #--echo "git cloning the repo for reference/tracking" | tee -a _TOP_DIR_OF_CONTAINER_ ;\
+    #xx test -d /opt/gitrepo/atlas  || git clone https://github.com/lbnl-science-it/atlas.git  ;\
+    ### test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
+    #xx cd /opt/gitrepo/atlas &&  git pull             ;\
+    cd /     ;\
+    echo ""  
+
+# add some marker of how Docker was build.
+COPY Dockerfile* /opt/gitrepo/container/
+COPY .           /opt/gitrepo/atlas-base/
+# above tmp, maybe remove above once have a stable base with working R, apollo and tidyverse
+
+RUN  cd / \
+  && touch _TOP_DIR_OF_CONTAINER_  \
+  && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
+  && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.0207.1953 d11 + update + R_ENV no path"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Grand Finale for Dockerfile.base"
+
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update + R_ENV NO PATH"     
+ENV DBG_DOCKERFILE Dockerfile.base
+
+ENV TZ America/Los_Angeles 
+# ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
+# ENV does overwrite parent def of ENV, so can rewrite them as fit.
+ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
+ENV TEST_DOCKER_ENV_2   Can_use_ADD_to_make_ENV_avail_in_build_process
+ENV TEST_DOCKER_ENV_REF https://vsupalov.com/docker-arg-env-variable-guide/#setting-env-values
+
+ENV TEST_DOCKER_ENV_YEQ1="Dockerfile ENV assignment as foo=bar, yes use of ="
+ENV TEST_DOCKER_ENV_NEQ1 "Dockerfile ENV assignment as foo bar, no  use of =, both seems to work"
+
+
+# unsure how to append/add to PATH?  likely have to manually rewrite the whole ENV var
+#ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
+# above is PATH in :integrationU where R 4.1.1 on Debian 11  works on Ubuntu 16.04 path
+# below PATH doesn't help resolve Rscript /main.R not finding R problem, but it should not hurt.
+#-- ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+#-- unset path to ensure it didn't make Rscript behave worse cuz somehow "test" got masked/lost
+
+# below is from bash -x /usr/bin/R
+ENV LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
+ENV R_LD_LIBRARY_PATH=/usr/lib/R/lib:/usr/lib/x86_64-linux-gnu:/usr/lib/jvm/default-java/lib/server
+ENV R_binary=/usr/lib/R/bin/exec/
+#xx ENV R_HOME=/usr/lib/R
+#xx ENV R_HOME=/usr/lib/R/bin/exec/R
+### R barf with warning that it ignores R_HOME env settings
+## ? might need  . /usr/lib/R/etc/ldpaths
+
+# setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile
+# not sure if colon list work anyway
+# but had lot of problem with R directly from R-base or Debian test branch, so fording them 
+#ENV R_LIBS              /usr/local/lib/R/site-library/
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  
+#ENV R_LIBS=/usr/local/lib/R/site-library/
+ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
+
+
+#ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
+#ENTRYPOINT [ "/bin/bash" ]
+#ENTRYPOINT [ "/usr/bin/rstudio" ]
+#ENTRYPOINT [ "Rscript", "/opt/gitrepo/atlas/main.R" ]
+#ENTRYPOINT [ "Rscript", "/main.R" ]
+#ENTRYPOINT [ "R" ]
+#ENTRYPOINT [ "/usr/lib/R/bin/exec/R" ]
+ENTRYPOINT [ "/usr/bin/R" ]
+# full path to R likely key to have it work in Ubuntu 16.04 host
+# but if /usr/bin/R doesn't work, then Rscript dont, cuz the test -x it does somehow need this set.
+# if no defined ENTRYPOINT, default to bash inside the container
+# careful not to cover /home/username (for this container)
+
+
+# Rscript is ELF binary, verbose debug:
+# Rscript -e 'q()' --verbose
+# running
+#  '/usr/lib/R/bin/R --no-echo --no-restore -e q()'
+# ERROR: R_HOME ('/usr/lib/R') not found
+# that's cuz R actually tries to 
+# "test -x /usr/lib/R" 
+# which fails (ie return 1) for no obvious reason (dir is a+x).
+# 
+# problem seems to be that 
+# which test 
+# is actualy not found.  
+# /usr/bin/test -x /usr/lib/R returns 0
+# while /usr/bin/R can be fixed with the path, Rscript still barf
+# and problem may actually be something else...
+# same container run on Mint 20.1 works file.  bizarre.
+# if container has newer kernel than host then it is problem??
+
+
+# vim: shiftwidth=4 tabstop=4 formatoptions-=cro nolist nu syntax=on

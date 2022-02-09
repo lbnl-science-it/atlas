@@ -82,7 +82,7 @@ RUN  cd / \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Atlas v1.0.4 -- Dockerfile.atlas 2022.0207.2146a d11   r404"     >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "cleaned Dockerfile.atlas"
+  && echo  "cleaned Dockerfile.atlas"             \
   && echo  "Grand Finale Dockerfile.atlas"
 
 

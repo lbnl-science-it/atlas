@@ -17,6 +17,7 @@
 
 # ghcr.io/lbnl-science-it/atlas are automated build using an ubuntu container, which works for CentOS, but in aws/ubuntu R won't start
 # tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
+
 # df4724d Dockerfile.base w/ Deb11 + apt update +  R_HOME etc ENV ... got R 4.0.4, apollo, tidyverse, and R loads in Mint(U16.04), so testing atlas 1.0.2dcf  2022.0406
 # d785134 Dockerfile.base direct R 412 + apt update + R_HOME etc ENV #0206.  Rscript did not work, add PATH ENV didn't help, so rebuild after a new atlas:base is back to ubuntu 21.04.  here R works, but not Rscript, cuz test -x /usr/lib/R returns 1 :-\
 # 3e1332b Debian bullseye (11) no PATH; R 4.0.4
@@ -35,6 +36,7 @@ ARG TZ=PST8PDT
 #https://no-color.org/
 ARG NO_COLOR=1
 
+#ENV PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/conda/bin
 
 ## branch l2 (ie layer2, for code dev)
 ## depends on base branch, rebuild with r-base
@@ -76,7 +78,6 @@ RUN echo ''  ;\
     pwd  ;\
     echo ""
 
-
 COPY Dockerfile* /opt/gitrepo/container_layer2/
 COPY . /
 COPY . /opt/gitrepo/atlas/
@@ -89,12 +90,11 @@ RUN  cd / \
   && echo  "Atlas v1.0.4 -- Dockerfile.atlas 2022.0207.2146 d11   r404"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale Dockerfile.atlas"
 
+
+
 ENV DBG_ATLAS_CODE_VER "Atlas v1.0.4 -- Docker.atlas 2022.0207.2146 d11 r404"
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
-
-#xx ENV PATH=/usr/lib/R/bin/exec:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-## tmp overwrite PATH to test if this fix Rscript to work, did not work, maybe made it worse?  Ubuntu 21.04 test -x /usr/lib/R return 1 which is why R fails to run
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]

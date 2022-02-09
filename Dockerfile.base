@@ -1,4 +1,4 @@
-# Dockerfile for creating R container 
+# Dockerfile for creating R container
 # and add specific library needed by projects by LBNL/ETA
 # base layer is OS, R, CRAN libaries.
 # atlas is a l2 (layer 2) that have atlas R code (and possibly a few add on CRAN packages)
@@ -14,13 +14,13 @@
 
 #FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
 
-FROM debian:bullseye     
+FROM debian:bullseye
 
 MAINTAINER Tin (at) LBL.gov
 ARG DEBIAN_FRONTEND=noninteractive
 #ARG TERM=vt100
 ARG TERM=dumb
-ARG TZ=PST8PDT 
+ARG TZ=PST8PDT
 #https://no-color.org/
 ARG NO_COLOR=1
 
@@ -31,10 +31,10 @@ RUN echo  ''  ;\
     echo "This container build as os, then add r-base package " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
     export TERM=dumb      ;\
     export NO_COLOR=TRUE  ;\
-    apt-get update ;\  
+    apt-get update ;\
     apt-get -y --quiet install r-base ;\
     cd /    ;\
-    echo ""  
+    echo ""
 
 RUN echo  ''  ;\
     touch _TOP_DIR_OF_CONTAINER_  ;\
@@ -47,7 +47,7 @@ RUN echo  ''  ;\
     # ubuntu:   # procps provides uptime cmd
     apt-get -y --quiet install git file wget gzip bash less vim procps ;\
     apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
-    apt-get -y --quiet install openjdk-14-jre-headless   ;\ 
+    apt-get -y --quiet install openjdk-14-jre-headless   ;\
     # gdal cran install fails, cuz no longer libgdal26, but now libgdal28
     # apt-file search gdal-config
     apt-get -y --quiet install gdal-bin gdal-data libgdal-dev  libgdal28  ;\
@@ -56,7 +56,7 @@ RUN echo  ''  ;\
     # default-jdk is what provide javac !   # -version = 11.0.6
     # ref: https://www.digitalocean.com/community/tutorials/how-to-install-java-with-apt-on-ubuntu-18-04
     # update-alternatives --config java --skip-auto # not needed, but could run interactively to change jdk
-    apt-get -y --quiet install default-jdk r-cran-rjava  ;\ 
+    apt-get -y --quiet install default-jdk r-cran-rjava  ;\
     R CMD javareconf  ;\
     # debian calls it libnode-dev (ubuntu call it libv8-dev?)
     apt-get -y --quiet install libnode-dev libv8-dev ;\
@@ -75,7 +75,7 @@ RUN echo  ''  ;\
     #xx wget --quiet https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb  -O rstudio4deb10.deb ;\
     #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;\
     cd /    ;\
-    echo ""  
+    echo ""
 
 
 RUN echo ''  ;\
@@ -214,7 +214,7 @@ RUN echo ''  ;\
     export TERM=dumb  ;\
     # from library() calls
     Rscript --quiet --no-readline --slave -e 'install.packages(c("aCRM", "akima", "broom", "cluster", "clusterCrit", "corrplot", "DandEFA", "datamart", "data.table", "directlabels", "dismo", "dplyr", "factoextra", "FactoMineR", "fields", "fmsb", "gdata", "ggmap", "ggplot2", "ggthemes", "gpclib", "gridExtra", "Hmisc", "lubridate", "maps", "maptools", "ncdf", "ncdf4", "openair", "openxlsx", "proj4", "psych", "psychTools", "raster", "RColorBrewer", "readxl", "reshape2", "rgdal", "rgeos", "rJava", "rstudioapi", "scales", "sf", "sp", "stargazer", "stringi", "stringr", "tibble", "tictoc", "tidyr", "tigris", "timeDate", "tmap", "units", "utils", "xlsx", "xtable", "zoo"),     repos = "http://cran.us.r-project.org")'    ;\
-    # next one added 2021.0829 for Ling's parallel foreach SNOW cluster 
+    # next one added 2021.0829 for Ling's parallel foreach SNOW cluster
     Rscript --quiet --no-readline --slave -e 'install.packages(c( "ster", "sp", "rgeos", "geosphere", "doParallel", "iterators", "foreach", "rgdal", "doSNOW", "openxlsx"),     repos = "http://cran.us.r-project.org")'    ;\
     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.4.txt  ;\
     ls /usr/local/lib/R/site-library | sort | tee R-site-lib-ls.out.4.txt   ;\
@@ -230,7 +230,7 @@ RUN echo ''  ;\
     echo '==================================================================' ;\
     echo ''  ;\
     export TERM=dumb  ;\
-		## additions by Tin
+                ## additions by Tin
     Rscript --quiet --no-readline --slave -e 'install.packages("tidycensus",     repos = "http://cran.us.r-project.org")'    ;\
     Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;\
     # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
@@ -273,7 +273,7 @@ RUN echo ''  ;\
     ### test -d /opt/gitrepo/atlas  || mkdir -p /opt/gitrepo/atlas ;\
     #xx cd /opt/gitrepo/atlas &&  git pull             ;\
     cd /     ;\
-    echo ""  
+    echo ""
 
 # add some marker of how Docker was build.
 COPY Dockerfile* /opt/gitrepo/container/
@@ -285,10 +285,10 @@ RUN  cd / \
   && echo  "Dockerfile.base 2022.0207.1953 d11 + update GOLD_BASE104"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update GOLD_BASE104"     
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update GOLD_BASE104"
 ENV DBG_DOCKERFILE Dockerfile.base
 
-ENV TZ America/Los_Angeles 
+ENV TZ America/Los_Angeles
 # ENV TZ likely changed/overwritten by container's /etc/csh.cshrc
 # ENV does overwrite parent def of ENV, so can rewrite them as fit.
 ENV TEST_DOCKER_ENV     this_env_will_be_avail_when_container_is_run_or_exec
@@ -317,9 +317,9 @@ ENV R_binary=/usr/lib/R/bin/exec/
 
 # setting R_LIBS here not needed, at least not for CentOS host, it get stored in /etc/r.../profile
 # not sure if colon list work anyway
-# but had lot of problem with R directly from R-base or Debian test branch, so fording them 
+# but had lot of problem with R directly from R-base or Debian test branch, so fording them
 #ENV R_LIBS              /usr/local/lib/R/site-library/
-##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library  
+##ENV R_LIBS              /usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
 #ENV R_LIBS=/usr/local/lib/R/site-library/
 ENV R_LIBS=/usr/local/lib/R/site-library:/usr/lib/R/site-library:/usr/lib/R/library
 

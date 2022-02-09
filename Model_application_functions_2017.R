@@ -1142,27 +1142,30 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
     vehicles["pred_own"] <- NULL
     names(vehicles)[ncol(vehicles)] <- "pred_own"
     
-    
-    # Add: 2022.1.13 by Qianmiao
-    # Generate two data sets
-    households_output <- vehicles %>% select(household_id, budget) %>% group_by(household_id) %>% summarise(nvehicles=n(), budget=mean(budget))
-    households_output <- data1 %>% merge(households_output, by="household_id", all.x = T) %>% select(household_id, nvehicles, budget)
-    households_output$nvehicles[is.na(households_output$nvehicles)==T] <- 0
-    households_output$budget[is.na(households_output$budget)==T] <- 0
-    # households_output <- households_output %>% mutate(nvehicles_cat=case_when(nvehicles==0~"None", nvehicles==1~"One",
-    #                                                                           nvehicles==2~"Two", nvehicles==3~"Three", T~"Four or more"))
-    
-    vehicles_output <- vehicles %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
-      mutate(bodytype=case_when(car==1~"car", van==1~"van", suv==1~"suv", pickup==1~"pickup", T~"others"),
-             vintage_category=case_when(VEHAGE0==1~"0~5 years", VEHAGE1==1~"6~11 years", VEHAGE2==1~"12+ years"),
-             ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
-                                                                          maindriver_id, annual_mileage, pred_power, ownlease)
-    
-    output <- list()
-    output[[1]] <- households_output
-    output[[2]] <- vehicles_output
-    
     print('return results')
-    return(output)
+    return(vehicles)
+    
+    
+    # # Add: 2022.1.13 by Qianmiao
+    # # Generate two data sets
+    # households_output <- vehicles %>% select(household_id, budget) %>% group_by(household_id) %>% summarise(nvehicles=n(), budget=mean(budget))
+    # households_output <- data1 %>% merge(households_output, by="household_id", all.x = T) %>% select(household_id, nvehicles, budget)
+    # households_output$nvehicles[is.na(households_output$nvehicles)==T] <- 0
+    # households_output$budget[is.na(households_output$budget)==T] <- 0
+    # # households_output <- households_output %>% mutate(nvehicles_cat=case_when(nvehicles==0~"None", nvehicles==1~"One",
+    # #                                                                           nvehicles==2~"Two", nvehicles==3~"Three", T~"Four or more"))
+    # 
+    # vehicles_output <- vehicles %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
+    #   mutate(bodytype=case_when(car==1~"car", van==1~"van", suv==1~"suv", pickup==1~"pickup", T~"others"),
+    #          vintage_category=case_when(VEHAGE0==1~"0~5 years", VEHAGE1==1~"6~11 years", VEHAGE2==1~"12+ years"),
+    #          ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
+    #                                                                       maindriver_id, annual_mileage, pred_power, ownlease)
+    # 
+    # output <- list()
+    # output[[1]] <- households_output
+    # output[[2]] <- vehicles_output
+    # 
+    # print('return results')
+    # return(output)
   }
 }

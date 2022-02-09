@@ -1,10 +1,10 @@
 #################Clean the data from Urbansim ###############
 #Read the original data
-households <- read.table(file.path(inputdir, paste0('year',diryear),"households.csv"), header=T, sep=",")
-blocks <- read.table(file.path(inputdir,paste0('year',diryear),"blocks.csv"), header=T, sep=",")
-persons <- read.table(file.path(inputdir, paste0('year',diryear),"persons.csv"), header=T, sep=",")
-residential <- read.table(file.path(inputdir, paste0('year',diryear),"residential.csv"), header=T, sep=",")
-jobs <- read.table(file.path(inputdir, paste0('year',diryear),"jobs.csv"), header=T, sep=",")
+households <- read.table(file.path(inputdir, paste0('year',outputyear),"households.csv"), header=T, sep=",")
+blocks <- read.table(file.path(inputdir,paste0('year',outputyear),"blocks.csv"), header=T, sep=",")
+persons <- read.table(file.path(inputdir, paste0('year',outputyear),"persons.csv"), header=T, sep=",")
+residential <- read.table(file.path(inputdir, paste0('year',outputyear),"residential.csv"), header=T, sep=",")
+jobs <- read.table(file.path(inputdir, paste0('year',outputyear),"jobs.csv"), header=T, sep=",")
 
 # correct the error of person_id column name
 names(persons)[1] <- "person_id"
@@ -92,9 +92,9 @@ households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)
 # Geolocation data
 # rent percentage by tract
 residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
-# update 11.15
+# update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
 perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
-                                                            renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse)
+                                                            renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
 # perrent: precentage of rental housing is less than 25%
 perrent <- perrent %>% mutate(perrent1 = case_when(perrent < 25 ~ 1, TRUE~0),
                               perrent2 = case_when(perrent < 45 & perrent >=25 ~ 1, TRUE~0),

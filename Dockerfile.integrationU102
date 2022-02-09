@@ -2,6 +2,7 @@
 ### for now build on top of working :IntegrationU
 ### slight fix for PR "v1.0.2 data clean fix"
 ### docker build -t tin6150/atlas:integrationU102dcf -f Dockerfile.integrationU102 . | tee LOG.Dockerfile.integrationU102dcfex4.txt
+### docker build -t tin6150/atlas:integrationU104    -f Dockerfile.integrationU102 . | tee LOG.Dockerfile.integrationU104ex4.txt
 ### docker push     tin6150/atlas:integrationU102dcf 
 ### tested work on zorin 12.4 (Based on Ubuntu 16.04 LTS), and aws/ubuntu, which is 16.04.3 LTS Xenial Xerus
 ### based on Dockerfile.atlas

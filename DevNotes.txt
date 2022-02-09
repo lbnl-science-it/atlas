@@ -59,3 +59,13 @@ manual build
   docker push     tin6150/atlas:integrationU                           # just to be very obvious this is same as integration branch, rebuild cuz of ubuntu compatibility problem.
   # and strangely, this image works in the aws ubuntu instance, but NOT the ghcr one.  unsure why at this point.
 
+
+
+R libs
+======
+
+core, must have libraries for Atlas 1.0.4:
+  tidyverse dplyr  apollo tictoc
+  paralle doParallel foreach
+
+other are used for data cleaning somewhere else, should be able to live without them.

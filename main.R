@@ -28,8 +28,8 @@ if(useparser){
   option_list <- list( 
     make_option(c("--indir"),  dest="inputdirPath",  action="store", help="path to input  data", default="/atlas_input" ),
     make_option(c("--outdir"), dest="outputdirPath", action="store", help="path to output data", default="/atlas_output" ),
-    make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="/" ),
-    make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/" ),
+    make_option(c("--basedir"), dest="basedirPath", action="store", help="dir where pilates/orchestrator is located", default="~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES" ),
+    make_option(c("--codedir"), dest="codedirPath", action="store", help="base dir where R code is located", default="/opt/gitrepo/atlas" ),
     make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="2017" ),
     make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="1" ),
     make_option(c("--nsample"), dest="nsample", action="store", help="subsample of hh to process, 0 if all hh", default= "0" ),
@@ -42,28 +42,28 @@ if(useparser){
   
   opt <- parse_args(OptionParser(option_list=option_list))
   
-  showDebug = 1
-  if( showDebug ) {
-    print( "Hello World from R! (rel:2022.0118.2125)" )
-    print( "** input  directory specified as, and content:") 
-    print( opt$inputdirPath )
-    print( list.files( opt$inputdirPath, recursive=TRUE ) )
-    print( "** output directory specified as, and content:")
-    print( opt$outputdirPath )
-    print( list.files( opt$outputdirPath, recursive=TRUE ) )
-    print( "** codedir  directory specified as:") 
-    print( opt$codedirPath )
-    print( "** basedir  directory specified as:") 
-    print( opt$basedirPath )
-    print( "** outputyear, freq specified as:") 
-    print( opt$outputyear )
-    print( opt$freq )
-    print( "** number of clusters for parallel computing")
-    
-    print( "sample of households to process")
-    if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
-  }
-	  
+  
+  print( "Hello World from R! (ref:2022.0113.1213)" )
+  print( "input  directory specified as:") 
+  print( opt$inputdirPath )
+  print( "--" )
+  print( "output directory specified as:")
+  print( opt$outputdirPath )
+  print( "--" )
+  print( "codedir  directory specified as:") 
+  print( opt$codedirPath )
+  print( "--" )
+  print( "basedir  directory specified as:") 
+  print( opt$basedirPath )
+  print( "--" )
+  print( "outputyear, freq specified as:") 
+  print( opt$outputyear )
+  print( opt$freq )
+  print( "number of clusters for parallel computing")
+  
+  print( "sample of households to process")
+  if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
+  
   # read out the global variables so that subsequent programs can all use them
   
   basedir = opt$basedirPath
@@ -87,7 +87,7 @@ if(useparser){
 # can be modified 
 if(!useparser){ # if not using parser, define things here for debuging process
 #  codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
- codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
+# codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
  codedir = '/'
   # Global dir and variables
   # these are best set as command line arguments to main.R via the optparse above
@@ -97,9 +97,9 @@ if(!useparser){ # if not using parser, define things here for debuging process
   outputdir <- file.path(basedir, 'atlas_output')
   
   
-  outputyear <- 2010
-  nsample = 20000
-  Npe = 2
+  outputyear <- 2011
+  nsample = 0
+  Npe = 9
   
 }
 ###########################################
@@ -115,6 +115,9 @@ library(tidyverse)
 library(dplyr)
 library(apollo)
 library(tictoc)
+library(parallel)
+library(doParallel)
+library(foreach)
 
 
 # Note currently the static model predicts output year directly, 
@@ -132,9 +135,6 @@ source(paste0('Model_application_',diryear, '.R'))
 
 # 4. model run
 
-library(parallel)
-library(doParallel)
-library(foreach)
 
 registerDoParallel(cores = Npe) 
 
@@ -149,6 +149,7 @@ if(nsample == 0){
   print('processing the full population')
   Nloop = Nloop.max # full sample
   hh.dat = hh.masterdat
+#  print('max loop',Nloop)
 }else{ # if 0 < nsample < max hh number
   print(paste('processing subsample',nsample,'hh'))
   Nloop = floor(nsample/10000)
@@ -157,7 +158,7 @@ if(nsample == 0){
   hh.dat = hh.masterdat %>% sample_n(nsample)
 }
 
-
+# hh.dat = hh.masterdat[]
 if(Nloop == 0){ # nsample less than 10000 hh, direct compute
   print('less than 10000 households, using a serial run')
   data1 = hh.dat
@@ -165,7 +166,7 @@ if(Nloop == 0){ # nsample less than 10000 hh, direct compute
   res = model_application(persons, data1, coefs_name_mile, coefs_mile , coef_names_veh, coef_values_veh, 
                     coef_names_type, coef_values_type, coef_names_car, coefs_car,
                     coef_names_van, coefs_van, coef_names_suv, coefs_suv, coef_names_pick, coefs_pick,
-                    coef_names_power, coef_values_power)
+                    coef_names_power, coef_values_power,loopi = 1)
 }else { # more than 10000
   tic()
   res <- foreach(i=1:Nloop, 
@@ -184,7 +185,7 @@ if(Nloop == 0){ # nsample less than 10000 hh, direct compute
     model_application(pp.tmp, data1, coefs_name_mile, coefs_mile , coef_names_veh, coef_values_veh, 
                       coef_names_type, coef_values_type, coef_names_car, coefs_car,
                       coef_names_van, coefs_van, coef_names_suv, coefs_suv, coef_names_pick, coefs_pick,
-                      coef_names_power, coef_values_power)
+                      coef_names_power, coef_values_power, loopi = i)
   }
   toc()
   
@@ -205,8 +206,11 @@ vehicles_output <- res %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
          ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
                                                                       maindriver_id, annual_mileage, pred_power, ownlease)
 
+# 5. write out the results # we may need to add some post processing code here after clarifying the variables with Qianmiao
 
 write.csv(vehicles_output, file = file.path(outputdir, paste0('vehicles_',outputyear,'.csv')), row.names = F) # vehicle level prediction
 write.csv(households_output, file = file.path(outputdir, paste0('householdv_',outputyear,'.csv')),row.names = F) # houshold level prediction
+
+
 
 

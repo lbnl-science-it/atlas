@@ -104,6 +104,7 @@ households <- households %>% merge(perrent, by="tract_id")
 rm(perrent)
 
 # Accessbility data
+# 
 names(job)[1] <- "tract_id"
 households <- households %>% merge(job, by="tract_id", all.x=TRUE)
 households$access_zscore[is.na(households$access_zscore)] <- 0
@@ -133,6 +134,9 @@ households <- households %>% mutate(hhage_34=case_when(age_of_head<=34~1, TRUE~0
                                   hhage_65=case_when(age_of_head>=65~1, TRUE~0))
 
 ##### generate some variable for later estimation ######
+# LJ flag: this is only to move the uno and sero and id number for later model estimation usage
+# is there a reason why this needs to be here? --> no, but still leave it here for now
+# used for estimation used in old apollo code
 households$uno <- 1
 households$sero <- 0
 column5 <- names(households[5])
@@ -148,7 +152,9 @@ households <- households %>% relocate(id, .after=sero)
 ############################ person level data clean ###################################
 # Age
 persons <- persons %>% filter(age >= 18)
-names(persons)[2] <- "R_AGE_IMP"
+# LJ flag: this will cause problem when the order of variables in person table change
+#names(persons)[2] <- "R_AGE_IMP"
+persons = persons %>% rename(R_AGE_IMP = age)
 # Education
 persons <- persons %>% mutate(below_high = case_when(edu <= 15 ~ 1, TRUE~0),
                                               high = case_when(edu ==16 | edu == 17 ~ 1, TRUE~0),

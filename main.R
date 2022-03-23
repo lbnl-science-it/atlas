@@ -86,20 +86,20 @@ if(useparser){
 #-------- Below is Ling's code with inputdir, outputdir, inputyear, outputyear manually defined -----#
 # can be modified 
 if(!useparser){ # if not using parser, define things here for debuging process
-#  codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
+  codedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
 # codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
- codedir = '/'
+# codedir = '/'
   # Global dir and variables
   # these are best set as command line arguments to main.R via the optparse above
-#  basedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas'
-  basedir = '/mnt/'
+  basedir = '~/Dropbox/Research/SmartGrid_Behavioral/TransportationInitiative/ATLAS/Software_Development/AWS/PILATES/pilates/atlas'
+#  basedir = '/mnt/'
   inputdir <- file.path(basedir,'atlas_input')
   outputdir <- file.path(basedir, 'atlas_output')
   
   
-  outputyear <- 2011
-  nsample = 0
-  Npe = 9
+  outputyear <- 2017
+  nsample = 1000
+  Npe = 2
   
 }
 ###########################################
@@ -204,7 +204,23 @@ vehicles_output <- res %>% select(household_id, vehicle_id, VEHAGE:pred_own) %>%
   mutate(bodytype=case_when(car==1~"car", van==1~"van", suv==1~"suv", pickup==1~"pickup", T~"others"),
          vintage_category=case_when(VEHAGE0==1~"0~5 years", VEHAGE1==1~"6~11 years", VEHAGE2==1~"12+ years"),
          ownlease=case_when(pred_own==1~"own", T~"lease")) %>% select(household_id, vehicle_id, bodytype, vintage_category,
-                                                                      maindriver_id, annual_mileage, pred_power, ownlease)
+                                                                      maindriver_id, annual_mileage, pred_power, ownlease,
+                                                                      VEHAGE0, VEHAGE1,VEHAGE2)
+# distribute the vintage prediction to actual model year
+# vintage 3: age assignment
+vintage3_exp <- 0.200526701  # currently hard coded exponetional distribution parameter derived from NHTS 2017 data
+
+nrow1 <- vehicles_output %>% filter(VEHAGE0==1) %>% nrow()
+vehicles_output$modelyear[vehicles_output$VEHAGE0==1] <- outputyear-floor(runif(nrow1, min = 0, max = 4.99999))
+
+nrow2 <- vehicles_output %>% filter(VEHAGE1==1) %>% nrow()
+vehicles_output$modelyear[vehicles_output$VEHAGE1==1] <- outputyear-floor(runif(nrow2, min = 5, max = 10.99999))
+
+nrow3 <- vehicles_output %>% filter(VEHAGE2==1) %>% nrow()
+vehicles_output$modelyear[vehicles_output$VEHAGE2==1] <- outputyear-floor(rexp(nrow3, rate = vintage3_exp))-11
+
+vehicles_output = vehicles_output %>% select(-VEHAGE0, -VEHAGE1,-VEHAGE2)
+
 
 # 5. write out the results # we may need to add some post processing code here after clarifying the variables with Qianmiao
 

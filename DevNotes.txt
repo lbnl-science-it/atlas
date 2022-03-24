@@ -109,3 +109,15 @@ core, must have libraries for Atlas 1.0.4:
   paralle doParallel foreach
 
 other are used for data cleaning somewhere else, should be able to live without them.
+
+
+
+vertion tagging
+===============
+
+Best if update Dockerfile.atlas with version/tag info, make that commit, then tag.
+
+eg, after getting a PR or just geerally tag a commit at a specific version
+
+git tag -a v1.0.6 41f98e9 -m "main.R: add modleyear in vehicle output file"
+git push --tags origin main

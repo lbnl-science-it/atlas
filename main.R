@@ -33,8 +33,10 @@ if(useparser){
     make_option(c("--outyear"), dest="outputyear", action="store", help="output year", default="2017" ),
     make_option(c("--freq"), dest="freq", action="store", help="simulation interval", default="1" ),
     make_option(c("--nsample"), dest="nsample", action="store", help="subsample of hh to process, 0 if all hh", default= "0" ),
-    make_option(c("--npe"), dest="npe", action="store", help="number of cores for parallel computing", default="9" ) # number of cores to use in parallel run
+    make_option(c("--npe"), dest="npe", action="store", help="number of cores for parallel computing", default="9" ), # number of cores to use in parallel run
     
+    # LJ add 5/31/2022, option to read zscore of job accessibility by transit from beam, 1- true, 0- false, will read from the observed data
+    make_option(c("--beamac"), dest="beamac", action="store", help="indicator of whether to read from beam derived zscore of job accessibility by transit", default="0" ) 
     
   )
   # input year is previous year in urbansim output, output year is the current year in urbansim output
@@ -75,6 +77,9 @@ if(useparser){
 #  freq  = strtoi(opt$freq, base=10) # this variable will be used for next version of atlas
   nsample = strtoi(opt$nsample, base=10) # number of households to subsample
   Npe = strtoi(opt$npe, base=10) # number of processors to use
+  
+  # read option of whether read from beam derived accessibility, 0, 1
+  beamac = strtoi(opt$beamac, base=10)
 
   print( "basedir and codedir parsed as:") 
   print( basedir )
@@ -100,6 +105,8 @@ if(!useparser){ # if not using parser, define things here for debuging process
   outputyear <- 2017
   nsample = 1000
   Npe = 2
+  
+  beamac = 0 # read from observed job accessibility
   
 }
 ###########################################

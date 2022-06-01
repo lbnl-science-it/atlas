@@ -11,7 +11,11 @@ if(names(persons)[1] == 'X'){persons = persons %>% rename(person_id = X)}
 
 
 # Accessbility data
-load(file.path(inputdir, "accessbility_2015.RData")) # this will load job
+if(beamac>0){ # if read from beam
+  job <- read.table(file.path(inputdir, paste0('year',outputyear),paste0("accessibility_",outputyear,"_tract.csv")), header=T, sep=",")
+}else{# else read from observed data
+  load(file.path(inputdir, "accessbility_2015.RData"))
+}
 
 # availability of transit/bus by tract, only used for 2010 parameters
 if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}
@@ -95,11 +99,11 @@ households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)
 # rent percentage by tract
 residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
 if(outputyear == 2010){
+  # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
   perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                               renthouse = sum(tenure=="rent")) %>% mutate(perrent=renthouse/totalhouse * 100)
   
 }else{
-  # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
   perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                               renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
   

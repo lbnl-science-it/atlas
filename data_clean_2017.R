@@ -10,7 +10,13 @@ jobs <- read.table(file.path(inputdir, paste0('year',outputyear),"jobs.csv"), he
 names(persons)[1] <- "person_id"
 
 # Accessbility data
-load(file.path(inputdir, "accessbility_2015.RData"))
+if(beamac>0){ # if read from beam, read the accessibility computed from beam by preprocess.py, which was saved in the inputdir/yearXXXX
+  job <- read.table(file.path(inputdir, paste0('year',outputyear),paste0("accessibility_",outputyear,"_tract.csv")), header=T, sep=",")
+}else{# else read from observed data
+  load(file.path(inputdir, "accessbility_2015.RData"))
+}
+
+
 
 # availability of transit/bus by tract, only used for 2010 parameters
 if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}

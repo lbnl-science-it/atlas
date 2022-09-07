@@ -78,7 +78,9 @@ sudo     Rscript --quiet --no-readline --slave -e 'install.packages(c( "ster", "
 #sudo     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.4.txt  ;
 sudo     Rscript --quiet --no-readline --slave -e 'install.packages("tidycensus",     repos = "http://cran.us.r-project.org")'    ;
 sudo     Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;
-sudo     Rscript --quiet --no-readline --slave -e 'install.packages( "pacman" )'       ;
+
+sudo     Rscript --quiet --no-readline --slave -e 'install.packages( "pacman", repos = "http://cran.us.r-project.org")'        ;
+
 sudo     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse ) }' ;
 sudo     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager ) }' ;
 sudo     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;
@@ -87,4 +89,4 @@ sudo     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ap
 sudo     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( optparse, argparse, stats ) }' ;
 #sudo     #Rscript --quiet --no-readline --slave -e 'p_load( )' ;
 #sudo     #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;
-#sudo     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;
+sudo     Rscript --quiet --no-readline --slave -e 'library()'   | sort | tee R_library_list.out.5.txt  ;

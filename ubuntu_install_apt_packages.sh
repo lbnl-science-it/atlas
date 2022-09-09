@@ -1,7 +1,13 @@
 # packages installed by the container by Dockerfile.base
+
+export DEBIAN_FRONTEND=noninteractive
+export TERM=dumb
+export TZ=PST8PDT
+export NO_COLOR=1
+
     apt-get update ;
     echo "installing packages via apt"  ;     
-    apt-get -y --quiet install r-base ;
+    apt-get -y --quiet install r-base ;      # Ubuntu 22.04 LTS has R 4.1 as of 2022-09-09
     #apt-get update ;
     apt-get -y --quiet install git file wget gzip bash less vim procps ;
     apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;

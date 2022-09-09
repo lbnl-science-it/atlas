@@ -235,7 +235,7 @@ RUN echo ''  ;\
     Rscript --quiet --no-readline --slave -e 'install.packages(c("psych", "ggpairs", "tableone"),     repos = "http://cran.us.r-project.org")'    ;\
     # https://www.rdocumentation.org/packages/pacman/versions/0.5.1
     # pacman provides wrapper function like p_load() to install package if needed, then load the library // R 3.5+, seems in R 4.0.3 now ;\
-    Rscript --quiet --no-readline --slave -e 'install.packages( "pacman" )'       ;\
+    Rscript --quiet --no-readline --slave -e 'install.packages( "pacman", repos = "http://cran.us.r-project.org" )'       ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( utils, foreign, pastecs, mlogit, graphics, VGAM, aod, plotrix, Zelig, Zelig, vctrs, maxLik, plyr, MASS, ordinal, mltest, haven, stargazer, stringr, tidyverse ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( gWidgets2, gWidgets2tcltk, miscTools, lmtest, dplyr, BiocManager ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( ggplot2, scales ) }' ;\

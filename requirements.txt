@@ -1,7 +1,33 @@
 # python3 pip packages needed by bild-aq
+## pip install -r requirements.txt
+####
+#### tempo
+####
 #os
 numpy  
 matplotlib  
 seaborn		>= 0.9
 #time  
 #copy
+## 
+####
+#### LD_emission
+####
+#regex 		>= 2022.9.13
+#re 		
+#shutil
+#sys
+#yaml 		>= 6.0   ##  name?
+#PyYAML 	>= 6.0     ## fail to install, 5.4 exist
+docker 		>= 5.0.3
+argparse
+#??logging		>= 0.4.9.6  ## https://pypi.org/project/logging/  ##??
+####
+#### Inmap
+####
+geopandas	>= 0.11.1
+####
+#### EVI Pro Lite
+####
+#urllib.request 	>= 0.0.0
+#json

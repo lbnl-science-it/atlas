@@ -1,0 +1,7 @@
+# python3 pip packages needed by bild-aq
+#os
+numpy  
+matplotlib  
+seaborn  
+time  
+#copy

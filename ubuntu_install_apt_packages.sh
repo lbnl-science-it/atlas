@@ -26,3 +26,5 @@ export NO_COLOR=1
     ##?? apt-file update ;
     #xx apt-get -y --quiet install ./rstudio4deb10.deb     ;
     apt-get -y --quiet install git git-all  ;
+# next one is for BILD-AQ
+    apt-get -y --quiet install python3-pip  ;

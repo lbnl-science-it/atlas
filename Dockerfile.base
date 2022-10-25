@@ -242,6 +242,7 @@ RUN echo ''  ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( snow, foreach, parallel, doParallel, tictoc ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( apollo ) }' ;\
     Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( optparse, argparse, stats ) }' ;\
+    Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load( fastDummies ) }' ;\
     #Rscript --quiet --no-readline --slave -e 'p_load( )' ;\
     #Rscript --quiet --no-readline --slave -e '{ library(pacman); p_load(  ) }' ;\
 
@@ -282,10 +283,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Dockerfile.base 2022.0207.1953 d11 + update GOLD_BASE104"   >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Dockerfile.base 2022.1025.1625 d11 + fastDummies"   >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale for Dockerfile.base"
 
-ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.0207.1953.d11 Bullseye + update GOLD_BASE104"
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2022.1025.1625.d11 Bullseye + fastDummies"
 ENV DBG_DOCKERFILE Dockerfile.base
 
 ENV TZ America/Los_Angeles

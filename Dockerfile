@@ -1,1 +1,1 @@
-Dockerfile.atlas
+Dockerfile.base

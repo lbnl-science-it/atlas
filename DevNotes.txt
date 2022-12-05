@@ -133,4 +133,4 @@ git push --tags origin main
 git tag -a  vBase1.2.0 d4259f7 -m "base layer for sfb-v2"
 git push -u origin  vBase1.2.0
 
-git tag -a sfb-v2.0.1 hashi-post-c6f5795 -m "sfb v2.0.1 main.R update to use --mod 1|2"
+git tag -a sfb-v2.0.1 779104a -m "sfb v2.0.1 main.R update to use --mod 1|2"

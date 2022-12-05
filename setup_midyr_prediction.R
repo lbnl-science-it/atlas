@@ -13,7 +13,7 @@ library(tictoc)
 
 # load main driver coefs
 print('load prediction coefs and functions')
-load(file=file.path('altas_v2_coefs', "main_driver.rda"))
+load(file=file.path('atlas_v2_coefs', "main_driver.rda"))
 source(file=file.path('atlas_v2_code','8main_driver_unified.R'))
 source(file=file.path('atlas_v2_code','10new_hh.R'))
 

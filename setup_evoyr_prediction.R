@@ -2,6 +2,15 @@
 
 options(dplyr.summarise.inform = FALSE)
 
+# folders
+adoptdir <- file.path(inputdir,'adopt')
+rdatdir <- file.path(outputdir, 'rdata') # to store intermediate results
+if(!file.exists(rdatdir)){dir.create(rdatdir)}
+
+v2codedir <- file.path('atlas_v2_code')
+v2coefdir <- file.path('atlas_v2_coefs')
+
+
 #==============Start: modeling domain specific parameter====================================#
 #  for SFB, it will changeg for austin
 local.us.ratio = 0.023  # ratio of sale totals between local, i.e. SFB, and U.S. this number is derived based on SFB vs US total vehicles
@@ -14,6 +23,7 @@ truckA=0.000486; truckB=-0.02414; truckC=0.382124; truckD=-3.31743; truckE=104.3
 # calibrated factor using 2018 and 2019 sales data compared to carb derived
 local.factor = T # if apply a correction factor (cuurrently only work for 2019)
 adopt.fnm = 'adopt_raw.csv'
+
 adopt.us = fread(file.path(adoptdir, adopt.fnm)) %>%
   filter(year %in% c(2018,2019)) 
 Nsale = sum(adopt.us$sales)
@@ -38,13 +48,7 @@ library(data.table)
 library(tictoc)
 library(fastDummies)
 
-# folders
-adoptdir <- file.path(inputdir,'adopt')
-rdatdir <- file.path(outputdir, 'rdata') # to store intermediate results
-if(!file.exists(rdatdir)){dir.create(rdatdir)}
 
-v2codedir <- file.path('atlas_v2_code')
-v2coefdir <- file.path('atlas_v2_coefs')
 
 # 
 #   

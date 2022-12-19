@@ -88,7 +88,8 @@ toc()
 # 6:      own      2005           858
 
 vehicles_output = vehicles0.5 %>% select(-annual_mileage) # currently, we do not predict mileage
-households_output = hhv0.5 %>% select(-budget) # currently, we do not predict mileage
+#households_output = hhv0.5 %>% select(-budget) # currently, we do not predict mileage
+households_output = hhv0.5 
 
 # recode vintage category based on cuurrent year vintage
 vehicles_output = vehicles_output %>%

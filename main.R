@@ -130,6 +130,8 @@ if(!useparser){ # if not using parser, define things here for debuging process
   
   
   outputyear <- 2019
+  simyear = outputyear
+  
   nsample = 0 # 0- full sample, >0 subsample
   Npe = 40 # number of processors
   
@@ -154,7 +156,7 @@ if(!useparser){ # if not using parser, define things here for debuging process
 #     DO NOT MODIFY BELOW !
 ###########################################
 
-
+debugTF = F
 
 if(atlas_runmod == 1) {
   
@@ -219,6 +221,7 @@ if(atlas_runmod == 2){
       print('cleaning the mid year demo data')      
       source('clean_for_mid_prediction.R')
       
+      
       # 2. setup: loading global variables and setup function
       
       print('setup mid year prediction')
@@ -241,13 +244,26 @@ if(atlas_runmod == 2){
       print('clean data for vehicle evolution')
       source('clean_for_evo_prediction.R')
       
+      # for debugging purpose, we skip above cleaning step and load the data directly
+      if(debugTF){
+        load(file = file.path(inputdir, paste0('year',evoyear),'households0.RData')) #households0, 
+        load(file = file.path(inputdir, paste0('year',evoyear),'households1.RData')) # households1
+        load(file = file.path(inputdir, paste0('year',evoyear),'persons1.RData')) # persons1, 
+        load(file = file.path(inputdir, paste0('year',evoyear),'persons0.RData')) #persons0, 
+      }
+      
+      
+      
+      
       # 2. setup: loading global variables and setup function
       print('setup evolution year parameters and functions')
       source('setup_evoyr_prediction.R')
       
       # 3. run prediction for evolution year
       print('run evolution year prediction')
+      tic()
       source('run_evoyr_prediction.R')
+      toc()
       
       #remember to map the adopt vehicle predictions back to atlas vehicle bodytypes so that next round we can use it for vehicle transaction prediction
       

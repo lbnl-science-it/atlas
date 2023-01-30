@@ -2,6 +2,16 @@
 
 options(dplyr.summarise.inform = FALSE)
 
+library(stats)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(data.table)
+library(tictoc)
+library(fastDummies)
+
+
 # folders
 adoptdir <- file.path(inputdir,'adopt')
 rdatdir <- file.path(outputdir, 'rdata') # to store intermediate results
@@ -9,6 +19,7 @@ if(!file.exists(rdatdir)){dir.create(rdatdir)}
 
 v2codedir <- file.path('atlas_v2_code')
 v2coefdir <- file.path('atlas_v2_coefs')
+
 
 
 #==============Start: modeling domain specific parameter====================================#
@@ -21,32 +32,20 @@ truckA=0.000486; truckB=-0.02414; truckC=0.382124; truckD=-3.31743; truckE=104.3
 
 # correction factor for adopt fuel share, using multiplier for ev and phev
 # calibrated factor using 2018 and 2019 sales data compared to carb derived
-local.factor = T # if apply a correction factor (cuurrently only work for 2019)
+local.factor = T # whether to apply a correction factor (cuurrently only work for 2019)
 adopt.fnm = 'adopt_raw.csv'
-
 adopt.us = fread(file.path(adoptdir, adopt.fnm)) %>%
   filter(year %in% c(2018,2019)) 
 Nsale = sum(adopt.us$sales)
 adoptfuelshare = adopt.us[, by=fueltype, .(prob.hat=sum(sales)/Nsale)]
-# carb 2year derived sales share in 2019
+# carb 2year derived sales share in 2019 in SFB
 ev.carb = 0.111; phev.carb = 0.039
-ev.share.factor = ev.carb/adoptfuelshare$prob.hat[adoptfuelshare$fueltype == 'ev']
-phev.share.factor = phev.carb/adoptfuelshare$prob.hat[adoptfuelshare$fueltype == 'phev']
+ev.share.factor = ev.carb/adoptfuelshare$prob.hat[adoptfuelshare$fueltype == 'ev'] # 11.38
+phev.share.factor = phev.carb/adoptfuelshare$prob.hat[adoptfuelshare$fueltype == 'phev'] # 3.65
 
 
 
 #============== End: modeling domain specific parameter====================================#
-
-
-# initialization of the clustering
-library(stats)
-library(tidyverse)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(data.table)
-library(tictoc)
-library(fastDummies)
 
 
 
@@ -128,11 +127,12 @@ source(paste0(v2codedir,'/2addition_v2.R'))
 scrap_car <- c("car")
 scrap_truck <- c("pickup","suv", "van") # note we are using aggregated atlas vehicle types here
 
-veh.contHH.ratio = nrow(cont.veh)/nrow(vehicles0) # fraction of vehicles represented by the continuing hh
-
-car.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_car))/nrow(vehicles0%>%filter(vehtype %in% scrap_car)) # fraction of car represented by the continuing hh
-truck.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_truck))/nrow(vehicles0%>%filter(vehtype %in% scrap_truck)) # fraction of truck (vehicles other than car bodytype) represented by the continuing hh
-
+# fraction of vehicles represented by the continuing hh
+veh.contHH.ratio = nrow(cont.veh)/nrow(vehicles0) # 0.9337
+# fraction of car represented by the continuing hh # 0.9339
+car.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_car))/nrow(vehicles0%>%filter(vehtype %in% scrap_car)) 
+# fraction of truck (vehicles other than car bodytype) represented by the continuing hh #0.9341
+truck.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_truck))/nrow(vehicles0%>%filter(vehtype %in% scrap_truck)) 
 
 source(paste0(v2codedir,'/3scrappage.R'))
 
@@ -143,6 +143,7 @@ adopt.fnm = 'adopt_raw.csv'
 threshold <- 0.001
 adopt.us = fread(file.path(adoptdir, adopt.fnm)) %>%
   filter(year %in% (baseyear+1):evoyear)
+# local sale totals of new vehicles
 local.sale = floor(sum(adopt.us$sales,na.rm=T) * local.us.ratio * veh.contHH.ratio *ladj.factor ) # LJ 10/22/2022: further adjuustment by lifetime factor
 
 load(file.path(v2coefdir, 'newused_coefs.RData')) 
@@ -154,8 +155,8 @@ adopt.vehfuel = 'adopt_biannual_values.csv'
 adopt.us.new = fread(file.path(adoptdir, adopt.vehfuel))
 adopt.us.new$bodytype[adopt.us.new$bodytype=="suv"] <- "SUV" # to match coefs
 names(adopt.us.new)[1:3] <- c("adopt_fuel", "adopt_veh", "price")
-local.sale.new = cbind(adopt.us.new, floor(adopt.us.new$total_sales * local.us.ratio * veh.contHH.ratio*ladj.factor)) # LJ 10/22/2022: further adjuustment by lifetime factor
-names(local.sale.new)[11] <- "sales"
+local.sale.new = adopt.us.new%>%
+  mutate(sales = floor(adopt.us.new$total_sales * local.us.ratio * veh.contHH.ratio*ladj.factor)) # LJ 10/22/2022: further adjuustment by lifetime factor
 # load original coeffs
 coef3 <- fread(file.path(v2coefdir, 'final_coefficients_cec2017_v6.csv'))
 source(paste0(v2codedir,'/5new_mode_choice.R'))

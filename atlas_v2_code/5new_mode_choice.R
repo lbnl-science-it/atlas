@@ -1,7 +1,7 @@
 # This step is to tune the new vehicle choice model and made the prediction
 
-# First: lookup clean
-vehmodeset_clean <- function(datainput, rebate.input = 0, tax_credit.input = 0){
+# First: lookup clean # LJ: note that we do not have incentives in the data yet, so here we manually set them to zero
+vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA){
   require(tidyr)
   require(dplyr)
   require(fastDummies)
@@ -25,9 +25,10 @@ vehmodeset_clean <- function(datainput, rebate.input = 0, tax_credit.input = 0){
   # other veh charateristics variables
   data <- data %>% mutate(`log(range)` = log(range))
   
-  # incentives
-  data <- data %>% mutate(rebate = rebate.input, tax_credit = tax_credit.input)
-  
+  # incentives if non-na values are given, otherwide there should be rebate and tax_credit in the attributes
+  if(!is.na(rebate.input)){data <- data %>% mutate(rebate = rebate.input)}
+  if(!is.na(tax_credit.input)){data <- data %>% mutate(tax_credit = tax_credit.input)}
+
   return(data)
 }
 
@@ -81,7 +82,7 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
   data <- rbind(vehmodepredict.new1, vehmodepredict.new2, vehmodepredict.new3)
   data <- data[, expect_op:=sum(exp(yhat)), by=id][,id:=mean(id), by=id][,prob.hat:=exp(yhat)/expect_op]
   
-#  Nsale = sum(local.sale.new$sales)
+  Nsale = sum(local.sale.new$sales) # note the global variable Nsale was national totals, so here we need to recalc local totals 
   share.pred.veh = data[, by=adopt_veh, .(prob.hat=sum(prob.hat)/N.occassion)]
   share.target.veh = local.sale.new[, by=adopt_veh, .(prob.hat=sum(sales)/Nsale)] # LJ 10/22/2022: change N.occassion to Nsale
   share.pred.fuel = data[,by=adopt_fuel, .(prob.hat=sum(prob.hat)/N.occassion)]
@@ -99,13 +100,16 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
       # if after adjustment more than 100%, scale to 100%
       share.target.fuel$prob.hat[(share.target.fuel$adopt_fuel %in% c('phev','ev'))] = 
         share.target.fuel$prob.hat[(share.target.fuel$adopt_fuel %in% c('phev','ev'))] /tmp.sum2
+      tmp.sum2 = 1
     }
     if(tmp.sum>0){ # rescale other fuel type only when they have nonzero shares
       share.target.fuel$prob.hat[!(share.target.fuel$adopt_fuel %in% c('phev','ev'))] = 
         share.target.fuel$prob.hat[!(share.target.fuel$adopt_fuel %in% c('phev','ev'))] * (1-tmp.sum2)/tmp.sum
+      tmp.sum = sum(share.target.fuel$prob.hat[!(share.target.fuel$adopt_fuel %in% c('phev','ev'))])
+      
       }
     
-    }
+    }# if local factor = T
 
   err.metric.veh = sqrt(colMeans(abs((share.pred.veh[,2]-share.target.veh[,2])[,1]))^2)
   err.metric.fuel = sqrt(colMeans(abs((share.pred.fuel[,2]-share.target.fuel[,2])[,1]))^2)

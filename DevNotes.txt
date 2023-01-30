@@ -80,6 +80,9 @@ build via layers
         docker push     tin6150/atlas:l2
         docker run -it --entrypoint=bash tin6150/atlas:l2
 
+        # the Debian:11 based image, R worked in Mint.  
+        # For now, Dockerfile is sym link to branch specific file (.base vs .atlas)
+		
 
         branch 
           - base: back to using r-base image, will have to do manual build on CentOS and push to docker hub for use on aws/ubuntu

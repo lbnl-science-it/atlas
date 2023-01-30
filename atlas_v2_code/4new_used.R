@@ -31,7 +31,7 @@ vehmode_clean <- function(data1, data2){
 
 # Second: tune the constants and then split vehicles
 new_used <- function(data){
-  data <- data[,cons:= 1][,logincome:= fcase(income_fu > 0, log(income_fu+0.001), income_fu <= 0, log(1))]
+  data <- data[,cons:= 1][,logincome:= fcase(income_fu > 0, log(income_fu+0.001), income_fu <= 0, log(0.001))]
 #  data <- data[,cons:= 1][,logincome:= log(income_fu+1)] # LJ 10/22/2022: changge to be consistent with psid regression definition
   
   coefs.tune <- as.matrix(newused.coefs$coefficients)

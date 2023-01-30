@@ -1,14 +1,17 @@
 # run evolution year prediction
 
 initialyear <- (baseyear == iniyear) # whether the base year is the initial year (iniyear = 2017), if so, we do not have the vehicle acquirement year variable "acquire_year"
-
+library(tictoc)
 #============= step1: apply the replace/dispose/keep model
 # note transaction models use psid veh types to predict.
 print('prepare vehicle related predictors')
+tic()
 vehicles_thisyear <- dipose_clean(vehicles_thisyear, initialyear, yreffect)
-
+toc()
 print('predicting vehicle level transaction outcome')
+tic()
 tmp <- dispose_apply(vehicles_thisyear)
+toc()
 table(tmp$nextwave_status)/nrow(tmp)
 
 #tmp.sav = tmp; 
@@ -21,11 +24,13 @@ table(tmp$nextwave_status)/nrow(tmp)
 #============= step2: apply the addtion model
 
 print('predicting household level transaction outcomes')
+tic()
 households_thisyear <- addition_clean(vehicles_thisyear, households_thisyear)
 
 tmp2 <- addition(households_thisyear)
-table(tmp2$addition)/nrow(tmp2)
+toc()
 
+table(tmp2$addition)/nrow(tmp2)
 # LJ comment: no addition means no change in the level of vehicles
 # addition 1  addition 2  decrease 1  decrease 2 no addition 
 # 0.119505420 0.009272607 0.221495383 0.037608140 0.612118450 
@@ -36,6 +41,7 @@ table(tmp2$addition)/nrow(tmp2)
 print('adjust vehicle level disposal decision by hh level vehicle ')
 # first adjustment: random sample the number of households with disposed vehicles
 # adjust the number of hh with vehicle level disposal decision to match  total number of hh derived from hh-level disposal decision
+tic()
 hh3 <- nrow(tmp2[ncar_thiswave==3 & (addition=="decrease 2" | addition=="decrease 1")])
 hh4 <- nrow(tmp2[ncar_thiswave>=4 & (addition=="decrease 2" | addition=="decrease 1")])
 veh3 <- unique(tmp[ncar_thiswave==3&nextwave_status=="dispose"], by="headpid")[,c("headpid")]
@@ -67,6 +73,7 @@ tmp0 <- tmp[gap>0 & nextwave_status=="dispose" & ncar_thiswave>=3] %>%
   rbind(tmp[gap==0 | nextwave_status!="dispose" | ncar_thiswave<3])
 
 tmp <- as.data.table(setdiff(tmp, tmp0))[,nextwave_status:="keep"] %>% rbind(tmp0)
+toc()
 table(tmp$nextwave_status)/nrow(tmp)
 
 # dispose      keep   replace 
@@ -78,13 +85,16 @@ table(tmp$nextwave_status)/nrow(tmp)
 print('save the transaction outcomes to rdatdir')
 veh_trans_decision = tmp
 hh_trans_decision = tmp2
+tic()
 save(veh_trans_decision,hh_trans_decision, vehicles_thisyear, file = file.path(rdatdir,paste0('transact.outcome.',baseyear,'-',evoyear,'.RData')))
+toc()
 
 
 
 #============= step3: determine the scrappage vehicles and return to market used inventory
 print('vehicle survial model and used vehicle inventory')
 # 
+tic()
 vehicles_dispose_rep <- merge(tmp[nextwave_status=="replace"], vehicles_thisyear, by=c("headpid", "vehicle_id"))[
   ,.(headpid, vehicle_id, vehtype, pred_power, ownlease, deltayear,adopt_fuel, adopt_veh)][,vehicle_tag:="replaced"]
 vehicles_dispose <- merge(merge(vehicles_thisyear, tmp, by=c("headpid", "vehicle_id"))[nextwave_status=="dispose"],
@@ -103,6 +113,7 @@ vehicles_dispose_return <- merge(merge(fsetdiff(vehicles_dispose[,.(headpid, veh
                                        vehicles_dispose[,.(headpid, vehicle_id)], by=c("headpid", "vehicle_id")), vehicles_thisyear, by=c("headpid", "vehicle_id"))[
                                          ,.(headpid, vehicle_id, vehtype, vintage_category, annual_mileage, pred_power, ownlease, deltayear, adopt_fuel, adopt_veh)]
 vehicles_dispose_return <- vehicles_dispose_return %>% mutate(adopt_veh = recode(adopt_veh, 'minivan' = 'minvan'))
+toc()
 
 # get the used vehicle inventory
 
@@ -115,6 +126,7 @@ vehicles_dispose_return <- vehicles_dispose_return %>% mutate(adopt_veh = recode
 used_invent <- vehicles_dispose_return[,keyby=.(adopt_veh, adopt_fuel, vintage_category), 
                                        .(n=.N, model_year=median(deltayear))]  # summarize used inv by adopt veh fuel type, and vintage category
 
+# need to double check this
 used_invent <- used_invent %>% mutate(adopt_veh = recode(adopt_veh, 'minivan' = 'minvan'))
 # save the intermedium datasets
 save(vehicles_dispose, file=file.path(rdatdir, paste0("vehdispose_", baseyear, "_", evoyear, ".Rdata")))
@@ -125,11 +137,13 @@ save(used_invent, file=file.path(rdatdir, paste0("usedinventory_", baseyear, "_"
 
 #============= step4: predict the new or used vehciels
 print('predicting new or used choice')
+tic()
 vehmodepredict <- vehmode_clean(tmp, tmp2)
 N.occassion = dim(vehmodepredict)[1]
 newused <- new_used(vehmodepredict)
 vehmodepredict.new <- newused[[1]]
 vehmodepredict.used <- newused[[2]]
+toc()
 
 save(vehmodepredict.new, vehmodepredict.used, file=file.path(rdatdir, paste0("newusedchoice_", baseyear, "_", evoyear, ".Rdata")))
 
@@ -143,22 +157,27 @@ lookup <- vehmodeset_clean(adopt.us.new,rebate.input = 0, tax_credit.input = 0) 
 
 # prepare the new vehicle data for mode choice
 print('preparing predictors')
+tic()
 vehmodepredict.new <- vehmodepredict_newfunc(vehmodepredict.new)
+toc()
 
 # tune coef3 and predict mode
 print('predicting new vehicle choices')
 if(local.factor){print('calibrate based on adopt data further scaled by local factor')}
+tic()
 res.tmp <- vehmodechoice_new(vehmodepredict.new, local.factor =local.factor) # local.factor = T in setup_evoyr, --> adopt ev/phev sales scaled further by carb data
+toc()
 vehmodepredict.new = res.tmp[[1]]
 coef3.tuned = res.tmp[[2]]
 
-# assign continous model year
+# assign continous model year, half to mid year and half to evoyear.
 vehmodepredict.new <- vehmodepredict.new[,deltayear:=fcase(random<0.5, evoyear-1, random>=0.5, evoyear)]
 
 save(vehmodepredict.new, coef3.tuned, file=file.path(rdatdir, paste0("vehmodepredict.new", baseyear, "_", evoyear, ".Rdata")))
 
 #============= step 6: apply the vehicle choice model to old vehicle pool
 print('Now in step of predicting used vehicle choices')
+tic()
 N.occassion <- nrow(vehmodepredict.used)
 
 # readjust the coefficients, by adding two more vintage constants to be calibrated
@@ -197,6 +216,8 @@ vehmodepredict.used$deltayear[vehmodepredict.used$vintage_category=="6~11 years"
 vehmodepredict.used$deltayear[vehmodepredict.used$vintage_category=="12+ years"] <- evoyear-
   floor(rexp(n3, rate = -coef(vint3)[2]))-13
 
+toc()
+
 
 save(vehmodepredict.used, file=file.path(rdatdir, paste0("vehmodepredict.used", baseyear, "_", evoyear, ".Rdata")))
 
@@ -219,17 +240,22 @@ save(vehmodepredict, file=file.path(rdatdir, paste0("vehmodepredict", baseyear, 
 #vehmodepredict[adopt_veh=="suv", vehtype:="suv"][adopt_veh=="truck", vehtype:="pickup"]
 
 #============= step 7: own or lease prediction
-source(paste0(codes,'/7own_or_lease_v2.R'))
+print('predict own/lease')
+tic()
+source(paste0(v2codedir,'/7own_or_lease_v2.R'))
+toc()
 
 #============= LJ move to last step as the persons mmay have changed: step 8: predict main driver for new hh and newly acquired vehicles
 #vehmodepredict <- maindriver(vehmodepredict, persons_thisyear) # currently skip this step
 vehmodepredict$maindriver_id = NA
 
 #============= step 9: clean the vehicle data and household data for next wave
-source(paste0(codes,'/9output_data.R'))
+print('combining output data for continuing hh ')
+source(paste0(v2codedir,'/9output_data.R'))
 
 #============= step 10: match new hh to the hh with known veh prediction in the evolution year
 print('match the new hh with existing hh')
+
 demodat = households1
 #rm(households1)
 

@@ -171,7 +171,7 @@ vehmodepredict.new = res.tmp[[1]]
 coef3.tuned = res.tmp[[2]]
 
 # assign continous model year, half to mid year and half to evoyear.
-vehmodepredict.new <- vehmodepredict.new[,deltayear:=fcase(random<0.5, evoyear-1, random>=0.5, evoyear)]
+vehmodepredict.new <- vehmodepredict.new[,deltayear:=fcase(random<0.5, as.numeric(evoyear-1), random>=0.5, as.numeric(evoyear))]
 
 save(vehmodepredict.new, coef3.tuned, file=file.path(rdatdir, paste0("vehmodepredict.new", baseyear, "_", evoyear, ".Rdata")))
 

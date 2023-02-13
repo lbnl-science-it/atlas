@@ -42,3 +42,6 @@ vignettes/*.pdf
 *LOG
 LOG*
 *.log
+
+atlas_input/*
+atlas_output/*

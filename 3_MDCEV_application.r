@@ -8,10 +8,6 @@
 # Calls a separate script to define the model parameters, including the utility
 # function and coefficients.
 
-library(apollo)
-library(viridis)
-library(ggplot2)
-
 init_predict_mdcev <- function(pred_data, init_path, mdcev_model) {
   # Initialize and run an MDCEV model prediction
   # Requires: dataset of covariates for prediction, path to MDCEV initialization script,
@@ -65,6 +61,8 @@ mileage_plot <- function(pred_table, obs_data=NULL, plot=TRUE, add_colors=TRUE, 
   # Calculate average mileage (and average usage) for each vehicle type,
   # and optionally generate the plot
 
+  if (!require(ggplot2)) plot <- FALSE
+
   # Predicted average mileage for each model object
   pred_avg <- pred_table[, .(miles = mean(cont_mean)), keyby = c("model_name", "outcome", groupvar)]
 
@@ -86,7 +84,7 @@ mileage_plot <- function(pred_table, obs_data=NULL, plot=TRUE, add_colors=TRUE, 
       geom_col(aes(x=outcome, y=miles, group=model_name, fill=model_name), position='dodge') +
       labs(title="MDCEV Average Annual Mileage",
            x=NULL, y="Mileage") + coord_flip()
-    if (add_colors == TRUE) {
+    if (add_colors == TRUE & !require(viridisLite)) {
       pl <- pl + scale_fill_viridis(discrete = TRUE)
     }
     if (!is.null(groupvar)) {

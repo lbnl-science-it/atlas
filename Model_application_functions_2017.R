@@ -2,10 +2,6 @@
 ###Codes for running application related functions###
 #####################################################
 
-library(stringr)
-library(dplyr)
-library(data.table)
-
 ## Process coefs
 # 2
 coef2_prepare <- function(coef2){

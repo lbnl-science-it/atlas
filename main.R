@@ -138,7 +138,7 @@ if(!useparser){ # if not using parser, define things here for debuging process
   beamac = 0 # read from observed job accessibility
 
 
-  atlas_runmod = 2 # '1-static' or '2-dynamic'
+  atlas_runmod = 1 # '1-static' or '2-dynamic'
 
   setwd(codedir)
 
@@ -167,6 +167,7 @@ if(atlas_runmod == 1) {
   library(parallel)
   library(doParallel)
   library(foreach)
+  library(data.table)
 
   source('source_atlas_v1.R')
 
@@ -188,6 +189,7 @@ if(atlas_runmod == 2){
     library(parallel)
     library(doParallel)
     library(foreach)
+    library(data.table)
 
     source('source_atlas_v1.R')
 

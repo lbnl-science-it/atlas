@@ -40,7 +40,7 @@ if(useparser){
                 help="indicator of whether to read from beam derived zscore of job accessibility by transit", default="0" ) ,
  
     # LJ add 9/21/2022, option to run static or dynamic
-    make_option(c("--version"), dest="version", action="store", help="static (1) or dynamic (2) ", default="1" ) 
+    make_option(c("--mod"), dest="mod", action="store", help="static (1) or dynamic (2) ", default="1" ) 
     
  
   )
@@ -67,8 +67,8 @@ if(useparser){
   print( opt$freq ) # atlas can run frequency of 1 or 2. and this option is not used in the code yet as usim is running yearly.
   print( "number of clusters for parallel computing")
   print( opt$npe )
-  print ( "ATLAS version selection: 1-static or 2-dynamic")
-  print( opt$version )
+  print ( "ATLAS running mode selection: 1-static or 2-dynamic")
+  print( opt$mod )
 
   print( "sample of households to process. \nCaution: only works for static version, dynamic version will always use full population")
   if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
@@ -88,7 +88,7 @@ if(useparser){
   # read option of whether read from beam derived accessibility, 0, 1
   beamac = strtoi(opt$beamac, base=10)
   
-  atlas_version = strtoi(opt$version, base=10) # 'static' or 'dynamic'
+  atlas_runmod = strtoi(opt$mod, base=10) # 'static 1' or 'dynamic 2'
   
   warmTF = strtoi(opt$warmstart, base=10) # 1=warmstart run, 0=evolution run
   
@@ -102,8 +102,8 @@ if(useparser){
   setwd(codedir)
   
   
-  if(atlas_version == 2 & nsample !=0){
-    stop('Error - atlas_version 2: dynamic evolution should only run on full sample')
+  if(atlas_runmod == 2 & nsample !=0){
+    stop('Error - atlas run mode 2: dynamic evolution should only run on full sample')
   }
   
 # region specific constants here
@@ -136,16 +136,17 @@ if(!useparser){ # if not using parser, define things here for debuging process
   beamac = 0 # read from observed job accessibility
   
 
-  atlas_version = 2 # '1-static' or '2-dynamic'
+  atlas_runmod = 2 # '1-static' or '2-dynamic'
   
   setwd(codedir)
   
   iniyear = 2017 # default initialization year 
                  # Austin need to change this to 2018
   
-  if(atlas_version == 2 & nsample !=0){
-    stop('Error - atlas_version 2: dynamic evolution should only run on full sample')
+  if(atlas_runmod == 2 & nsample !=0){
+    stop('Error - atlas run mode 2: dynamic evolution should only run on full sample')
   }
+
   
   
 }
@@ -155,7 +156,7 @@ if(!useparser){ # if not using parser, define things here for debuging process
 
 
 
-if(atlas_version == 1) {
+if(atlas_runmod == 1) {
   
   # 1. set up 
   library(stats) # LJ add, predict function is used for predicting main driver and ownlease
@@ -171,7 +172,7 @@ if(atlas_version == 1) {
   
  } # static version of atlas, always run atlas_v1
 
-if(atlas_version == 2){
+if(atlas_runmod == 2){
   
   
   # # ---- global variables, will be moved to 'global_vars.R' after testing ------------- #
@@ -261,8 +262,8 @@ if(atlas_version == 2){
   
 }# run atlas_v2: for SFB, year <=2017 run static version, after that, dynamic evolve
 
-if(!(atlas_version %in% c(1,2))){
-  stop('specify atlas_version: 1 - static, 2 - dynamic')
+if(!(atlas_runmod %in% c(1,2))){
+  stop('specify atlas run mode: 1 - static, 2 - dynamic')
 }
 
 

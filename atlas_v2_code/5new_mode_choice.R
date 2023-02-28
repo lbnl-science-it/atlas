@@ -1,6 +1,19 @@
 # This step is to tune the new vehicle choice model and made the prediction
 
+# name mapping from coef table to adopt data generated dummy
+vehnm.map <- data.frame(coef.nms = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan','adopt_vehcar'),
+                        dummy.nms = c('adopt_veh_minvan','adopt_veh_suv','adopt_veh_truck','adopt_veh_van','adopt_veh_car'))
+
+pwrnm.map<- data.frame(coef.nms = c('adopt_fuelcng','adopt_fuelev','adopt_fuelfuelcell','adopt_fuelhybrid','adopt_fuelphev'),
+                       dummy.nms = c('adopt_fuel_cng','adopt_fuel_ev','adopt_fuel_fuelcell','adopt_fuel_hybrid','adopt_fuel_phev'))
+
+tunepwr.map <- data.frame(adopt = c('cng','ev','fuelcell','hybrid','phev'),
+                          coef = c('adopt_fuelcng','adopt_fuelev','adopt_fuelfuelcell','adopt_fuelhybrid','adopt_fuelphev'))
+
+tunepveh.map <- data.frame(adopt= c('minvan','suv','truck','van'),
+                           coef = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan'))
 # First: lookup clean # LJ: note that we do not have incentives in the data yet, so here we manually set them to zero
+# i.e. prepare choice set. Note that if some choice is not available, it should be set here with 0 dummy
 vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA){
   require(tidyr)
   require(dplyr)
@@ -8,20 +21,51 @@ vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA
   # prepare the vehicle mode choice set data
   data <- datainput
   # veh type dummies
-  data <- fastDummies::dummy_cols(data, select_columns = "adopt_veh") %>%
-    rename(adopt_vehminvan=adopt_veh_minvan, adopt_vehSUV=adopt_veh_SUV,
-           adopt_vehtruck=adopt_veh_truck, adopt_vehvan=adopt_veh_van, adopt_vehcar=adopt_veh_car)
+  data <- fastDummies::dummy_cols(data, select_columns = "adopt_veh") 
+  tmp.swap <- names(data %>% select(contains('adopt_veh_')))
+  renm <- vehnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
+  dropnm <- vehnm.map%>%filter(!(dummy.nms %in% tmp.swap))
+  setnames(data, renm$dummy.nms, renm$coef.nms)  
   
+  if(dim(dropnm)[1]>0){    # if there are nonexisting veh types
+    # set the nonexisting vehicle dummy to 0 in the attribute 
+    #so that we can still create interaction terms, we will drop these constant variable later
+    data[,dropnm$coef.nms]<-0
+    # drop the  constant of non-existing vheicle type from coefs
+    coef3new<<- coef3new %>% filter(!(coef %in% dropnm$coef.nms))
+  }
+  rm(renm)
+  
+  
+  # LJ 2/14/2023 if there are more alternative specific coef names than what appeared in the attribute, we add them here so that the interaction terms in the household data can still be computed. 
+  # but we can drop these missing constant coefs from coef3 so that we do not tune them
+  
+    # rename(adopt_vehminvan=adopt_veh_minvan, adopt_vehSUV=adopt_veh_SUV,
+    #        adopt_vehtruck=adopt_veh_truck, adopt_vehvan=adopt_veh_van, adopt_vehcar=adopt_veh_car)
+    # 
   # veh age dummies
   data <- data %>% mutate(`veh_age_bins1-2yr`=0,
                           `veh_age_bins>=3yr`=0)
   
   # veh fueltype dummies
-  data <- fastDummies::dummy_cols(data, select_columns = "adopt_fuel") %>%
-    rename(adopt_fuelcng=adopt_fuel_cng, adopt_fuelev=adopt_fuel_ev,
-           adopt_fuelfuelcell=adopt_fuel_fuelcell, adopt_fuelhybrid=adopt_fuel_hybrid,
-           adopt_fuelphev=adopt_fuel_phev)
+  data <- fastDummies::dummy_cols(data, select_columns = "adopt_fuel")
   
+  tmp.swap <- names(data %>% select(contains('adopt_fuel_')))
+  renm <- pwrnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
+  dropnm <- pwrnm.map%>%filter(!(dummy.nms %in% tmp.swap))
+  setnames(data, renm$dummy.nms, renm$coef.nms)  
+  if(dim(dropnm)[1]>0){    # if there are nonexisting veh types
+    # set the nonexisting vehicle dummy to 0 in the attribute so that we can still create interaction terms
+    data[,dropnm$coef.nms]<-0
+    # drop the  constant of non-existing vheicle type from coefs
+    coef3new <<- coef3new %>% filter(!(coef %in% dropnm$coef.nms))
+  }
+  rm(renm)
+  # 
+    # rename(adopt_fuelcng=adopt_fuel_cng, adopt_fuelev=adopt_fuel_ev,
+    #        adopt_fuelfuelcell=adopt_fuel_fuelcell, adopt_fuelhybrid=adopt_fuel_hybrid,
+    #        adopt_fuelphev=adopt_fuel_phev)
+    # 
   # other veh charateristics variables
   data <- data %>% mutate(`log(range)` = log(range))
   
@@ -51,9 +95,9 @@ vehmodepredict_newfunc <- function(data){
                                               nextwave_status=="replace"&has_van==1&adopt_vehvan==1, 1,
                                               nextwave_status=="replace"&has_pickup==1&adopt_vehtruck==1, 1, default = 0)]
   
-  coefnames <- coef3$coef
+  coefnames <- coef3new$coef
   coefnames <- c(coefnames, "id", "ncar_thiswave", "adopt_veh", "adopt_fuel", "headpid")
-  data = data[, ..coefnames]
+  data = data[, ..coefnames] # this step dropped the un-appear constant columns from the veh data
   return(data)
 }
 
@@ -63,19 +107,25 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
   vehmodepredict.new2 <- data[ncar_thiswave==2]
   vehmodepredict.new3 <- data[ncar_thiswave>=3]
   
-  coefs.tune1 <- as.matrix(coef3$HH_1)
-  coefs.tune2 <- as.matrix(coef3$HH_2)
-  coefs.tune3 <- as.matrix(coef3$HH_3)
+  coefs.tune1 <- as.matrix(coef3new$HH_1)
+  coefs.tune2 <- as.matrix(coef3new$HH_2)
+  coefs.tune3 <- as.matrix(coef3new$HH_3)
+  
+  coef.names = coef3new$coef
+  rownames(coefs.tune1)<-coef.names
+  rownames(coefs.tune2)<-coef.names
+  rownames(coefs.tune3)<-coef.names
   
   # initialize the prediction and error metric
   # LJ comment: this needs to be recoded with variable names
-  yhat1 =as.matrix(vehmodepredict.new1[,c(1:31)]) %*% coefs.tune1
+  # yhat1 =as.matrix(vehmodepredict.new1[,c(1:31)]) %*% coefs.tune1
+  yhat1 =as.matrix(vehmodepredict.new1[,..coef.names]) %*% coefs.tune1
   vehmodepredict.new1$yhat <- yhat1
   
-  yhat2 =as.matrix(vehmodepredict.new2[,c(1:31)]) %*% coefs.tune2
+  yhat2 =as.matrix(vehmodepredict.new2[,..coef.names]) %*% coefs.tune2
   vehmodepredict.new2$yhat <- yhat2
   
-  yhat3 =as.matrix(vehmodepredict.new3[,c(1:31)]) %*% coefs.tune3
+  yhat3 =as.matrix(vehmodepredict.new3[,..coef.names]) %*% coefs.tune3
   vehmodepredict.new3$yhat <- yhat3
   rm(yhat1, yhat2, yhat3)
   
@@ -110,26 +160,49 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
       }
     
     }# if local factor = T
-
-  err.metric.veh = sqrt(colMeans(abs((share.pred.veh[,2]-share.target.veh[,2])[,1]))^2)
-  err.metric.fuel = sqrt(colMeans(abs((share.pred.fuel[,2]-share.target.fuel[,2])[,1]))^2)
+  # use matrix
+  comp.veh = as.matrix(data.frame(target = share.target.veh$prob.hat, pred = share.pred.veh$prob.hat))
+  rownames(comp.veh) = share.target.veh$adopt_veh
   
-  # test: loop 10 times succeed!
+  comp.fuel = as.matrix(data.frame(target = share.target.fuel$prob.hat, pred = share.pred.fuel$prob.hat))
+  rownames(comp.fuel) = share.target.fuel$adopt_fuel
+  
+  err.metric.veh = sqrt(mean((comp.veh[,'target'] - comp.veh[,'pred'])^2))
+  err.metric.fuel = sqrt(mean((comp.fuel[,'target'] - comp.fuel[,'pred'])^2))
+  
+  
+  # err.metric.veh = sqrt(colMeans(abs((share.pred.veh[,2]-share.target.veh[,2])[,1]))^2)
+  # err.metric.fuel = sqrt(colMeans(abs((share.pred.fuel[,2]-share.target.fuel[,2])[,1]))^2)
+  
+  ####### Tune the coefs #################
+  tunepwr.map <- data.frame(adopt = c('cng','ev','fuelcell','hybrid','phev'),
+                            coef = c('adopt_fuelcng','adopt_fuelev','adopt_fuelfuelcell','adopt_fuelhybrid','adopt_fuelphev'))
+  tunepveh.map <- data.frame(adopt= c('minvan','suv','truck','van'),
+                             coef = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan'))
+  
+  # coef.indx = data.frame(indx = 1:length(coef.names), coef.names = coef.names)
   i=1
   while(isTRUE(err.metric.veh > threshold)|isTRUE(err.metric.fuel > threshold)){
     print(paste0("calibrate new vehice choice: Running ", i))
-     # tune vehicle type first
-    coefs.tune1[1:4,1] <- coefs.tune1[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
-    coefs.tune2[1:4,1] <- coefs.tune2[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
-    coefs.tune3[1:4,1] <- coefs.tune3[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
+    ## tune vehicle type first
+    a.nms = intersect(share.target.veh$adopt_veh,tunepveh.map$adopt) # adopt names
+    coef.to.tune = tunepveh.map%>%filter(adopt %in% a.nms)
+    # determine which coef to tune
+    # coefs.tune1[1:4,1] <- coefs.tune1[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
+    # coefs.tune2[1:4,1] <- coefs.tune2[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
+    # coefs.tune3[1:4,1] <- coefs.tune3[1:4,1] + as.matrix(log(share.target.veh[2:5,2]/share.pred.veh[2:5,2]))
+    coefs.tune1[coef.to.tune$coef,1] <- coefs.tune1[coef.to.tune$coef,1] + as.matrix(log(comp.veh[coef.to.tune$adopt,'target']/comp.veh[coef.to.tune$adopt,'pred']))
+    coefs.tune2[coef.to.tune$coef,1] <- coefs.tune2[coef.to.tune$coef,1] + as.matrix(log(comp.veh[coef.to.tune$adopt,'target']/comp.veh[coef.to.tune$adopt,'pred']))
+    coefs.tune3[coef.to.tune$coef,1] <- coefs.tune3[coef.to.tune$coef,1] + as.matrix(log(comp.veh[coef.to.tune$adopt,'target']/comp.veh[coef.to.tune$adopt,'pred']))
     
-    yhat1 =as.matrix(vehmodepredict.new1[,c(1:31)]) %*% coefs.tune1
+    
+    yhat1 =as.matrix(vehmodepredict.new1[,..coef.names]) %*% coefs.tune1
     vehmodepredict.new1$yhat <- yhat1
     
-    yhat2 =as.matrix(vehmodepredict.new2[,c(1:31)]) %*% coefs.tune2
+    yhat2 =as.matrix(vehmodepredict.new2[,..coef.names]) %*% coefs.tune2
     vehmodepredict.new2$yhat <- yhat2
     
-    yhat3 =as.matrix(vehmodepredict.new3[,c(1:31)]) %*% coefs.tune3
+    yhat3 =as.matrix(vehmodepredict.new3[,..coef.names]) %*% coefs.tune3
     vehmodepredict.new3$yhat <- yhat3
     rm(yhat1, yhat2, yhat3)
     
@@ -137,20 +210,29 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
     data <- data[, expect_op:=sum(exp(yhat)), by=id][,id:=mean(id), by=id][,prob.hat:=exp(yhat)/expect_op]
     
     
-    # tune fuel type second
+    # tune fuel type second (after update the prediction)
     share.pred.fuel = data[,by=adopt_fuel, .(prob.hat=sum(prob.hat)/N.occassion)]
-    coefs.tune1[18:22,1] <- coefs.tune1[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
-    coefs.tune2[18:22,1] <- coefs.tune2[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
-    coefs.tune3[18:22,1] <- coefs.tune3[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
+    comp.fuel[,'pred']= share.pred.fuel$prob.hat
+    
+    a.nms = intersect(share.target.fuel$adopt_fuel,tunepwr.map$adopt) # adopt names
+    coef.to.tune = tunepwr.map%>%filter(adopt %in% a.nms)
+    
+    coefs.tune1[coef.to.tune$coef,1] <- coefs.tune1[coef.to.tune$coef,1] + as.matrix(log(comp.fuel[coef.to.tune$adopt,'target']/comp.fuel[coef.to.tune$adopt,'pred']))
+    coefs.tune2[coef.to.tune$coef,1] <- coefs.tune2[coef.to.tune$coef,1] + as.matrix(log(comp.fuel[coef.to.tune$adopt,'target']/comp.fuel[coef.to.tune$adopt,'pred']))
+    coefs.tune3[coef.to.tune$coef,1] <- coefs.tune3[coef.to.tune$coef,1] + as.matrix(log(comp.fuel[coef.to.tune$adopt,'target']/comp.fuel[coef.to.tune$adopt,'pred']))
+    
+    # coefs.tune1[18:22,1] <- coefs.tune1[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
+    # coefs.tune2[18:22,1] <- coefs.tune2[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
+    # coefs.tune3[18:22,1] <- coefs.tune3[18:22,1] + as.matrix(log(share.target.fuel[c(1,3:6),2]/share.pred.fuel[c(1,3:6),2]))
     
     # get the prediction after two-step tunes
-    yhat1 =as.matrix(vehmodepredict.new1[,c(1:31)]) %*% coefs.tune1
+    yhat1 =as.matrix(vehmodepredict.new1[,..coef.names]) %*% coefs.tune1
     vehmodepredict.new1$yhat <- yhat1
     
-    yhat2 =as.matrix(vehmodepredict.new2[,c(1:31)]) %*% coefs.tune2
+    yhat2 =as.matrix(vehmodepredict.new2[,..coef.names]) %*% coefs.tune2
     vehmodepredict.new2$yhat <- yhat2
     
-    yhat3 =as.matrix(vehmodepredict.new3[,c(1:31)]) %*% coefs.tune3
+    yhat3 =as.matrix(vehmodepredict.new3[,..coef.names]) %*% coefs.tune3
     vehmodepredict.new3$yhat <- yhat3
     rm(yhat1, yhat2, yhat3)
     
@@ -161,8 +243,14 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
     share.pred.veh = data[, by=adopt_veh, .(prob.hat=sum(prob.hat)/N.occassion)]
     share.pred.fuel = data[,by=adopt_fuel, .(prob.hat=sum(prob.hat)/N.occassion)]
      
-    err.metric.veh = sqrt(colMeans(abs((share.pred.veh[,2]-share.target.veh[,2])[,1]))^2)
-    err.metric.fuel = sqrt(colMeans(abs((share.pred.fuel[,2]-share.target.fuel[,2])[,1]))^2)
+    comp.fuel[,'pred']= share.pred.fuel$prob.hat
+    comp.veh[,'pred']= share.pred.veh$prob.hat
+    
+    err.metric.veh = sqrt(mean((comp.veh[,'target'] - comp.veh[,'pred'])^2))
+    err.metric.fuel = sqrt(mean((comp.fuel[,'target'] - comp.fuel[,'pred'])^2))
+    
+    # err.metric.veh = sqrt(colMeans(abs((share.pred.veh[,2]-share.target.veh[,2])[,1]))^2)
+    # err.metric.fuel = sqrt(colMeans(abs((share.pred.fuel[,2]-share.target.fuel[,2])[,1]))^2)
     
     print(paste("Error of veh", err.metric.veh))
     print(paste("Error of fuel", err.metric.fuel))
@@ -174,9 +262,9 @@ vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local
   data <- data[,by=id, cumutility:=cumsum(prob.hat)][,by=id, random:=runif(1)][
     ,by=id, whichone:=cumsum((cumutility>=random))][whichone==1][,.(headpid, id, adopt_veh, adopt_fuel, random)]
   
-  coef3$HH_1 = as.vector(coefs.tune1)
-  coef3$HH_2 = as.vector(coefs.tune2)
-  coef3$HH_3 = as.vector(coefs.tune3)
+  coef3new$HH_1 = as.vector(coefs.tune1)
+  coef3new$HH_2 = as.vector(coefs.tune2)
+  coef3new$HH_3 = as.vector(coefs.tune3)
   
-  return(list(predicted = data, coef3.tuned = coef3 ))
+  return(list(predicted = data, coef3new.tuned = coef3new ))
 }

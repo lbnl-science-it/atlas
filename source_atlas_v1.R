@@ -103,7 +103,8 @@ vehicles_output = vehicles_output %>% select(-VEHAGE0, -VEHAGE1,-VEHAGE2)
 # LJ add: map to adopt vehicle category here, # note it is minvan, not minivan
 print('map to adopt vehicle type and powertrain type')
 vehicles_output = vehicles_output %>% mutate(adopt_veh = recode(bodytype, 'van'='minvan', 'pickup' = 'truck'), 
-                                             adopt_fuel = recode(pred_power, "AEV"="ev", "Hybrid"="hybrid","ICE"="conv","PHEV"="phev"))
+                                             adopt_fuel = recode(pred_power, "AEV"="ev", "Hybrid"="hybrid","ICE"="conv","PHEV"="phev"),
+                                             acquire_year = NA)
 
 
 

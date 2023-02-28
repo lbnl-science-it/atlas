@@ -114,41 +114,39 @@ if(useparser){
 #-------- Below is Ling's code with inputdir, outputdir, inputyear, outputyear manually defined -----#
 # can be modified
 if(!useparser){ # if not using parser, define things here for debuging process
-  # codedir = '/Volumes/GoogleDrive/Shared drives/Shared_ATLAS/fromLing/SoftwareDevelopment/sfb_atlas_v2/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
-  # codedir = '/mnt/data2/ljin/sfb_atlas_v2/code_inside_container' # if on gems instance
+  codedir = '/mnt/data2/ljin/sfb_atlas_v2/code_inside_container' # if on gems instance
   # codedir = '/mnt/code_inside_container'  # Note that R is launched from the "code_inside_container" folder
   # codedir = '/'
   # Global dir and variables
   # these are best set as command line arguments to main.R via the optparse above
-  # basedir = '/Volumes/GoogleDrive/Shared drives/Shared_ATLAS/fromLing/SoftwareDevelopment/sfb_atlas_v2'
-  # basedir = '/mnt/data2/ljin/sfb_atlas_v2'
+  #  basedir = '/Volumes/GoogleDrive/Shared drives/Shared_ATLAS/fromLing/SoftwareDevelopment/sfb_atlas_v2'
+  basedir = '/mnt/data2/ljin/sfb_atlas_v2'
   #  basedir = '/mnt/'
-  basedir <- getwd()
-  codedir <- "."
   inputdir <- file.path(basedir,'atlas_input')
   outputdir <- file.path(basedir, 'atlas_output')
-
-
-  outputyear <- 2017
+  
+  
+  outputyear <- 2021 # only place to change
   simyear = outputyear
-
+  
   nsample = 0 # 0- full sample, >0 subsample
-  Npe = 4 # number of processors
-
+  Npe = 40 # number of processors
+  
   beamac = 0 # read from observed job accessibility
-
-
-  atlas_runmod = 1 # '1-static' or '2-dynamic'
-
+  
+  
+  atlas_runmod = 2 # '1-static' or '2-dynamic'
+  
   setwd(codedir)
-
-  iniyear = 2017 # default initialization year
-                 # Austin need to change this to 2018
-
+  
+  iniyear = 2017 # default initialization year 
+  # Austin need to change this to 2018
+  
   if(atlas_runmod == 2 & nsample !=0){
     stop('Error - atlas run mode 2: dynamic evolution should only run on full sample')
   }
-
+  
+  
 }
 ###########################################
 #     DO NOT MODIFY BELOW !

@@ -1,4 +1,5 @@
 # MDCEV Initialization Functions and Variables
+# Shared across all model specifications.
 
 alternatives_list <- c("car1", "car2", "car3",
                        "van1", "van2", "van3",

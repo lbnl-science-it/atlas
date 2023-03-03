@@ -1,12 +1,11 @@
-# This code predicts the fleet mix owned by a household
-# The code is run 25 times and average value is computed for each of the alternatives
-# Number of replications can be changed by changing the value of "nrep" in control file
+# Prediction and application code for the MDCEV Mileage allocation model.
 #
-# This code takes 'predicted annual mileage' as input from '1_Mileage_prediction.r'
+# VehicleFleet_model() is the main application function. mileage_plot() can be
+# called with its results.
 # Output of this code serves as input to '4_Heuristic_mileage_reallocation.r'
 #
-# Calls a separate script to define the model parameters, including the utility
-# function and coefficients.
+# Calls a separate script (init_path) to define the model parameters,
+# including the utility function and coefficients.
 
 init_predict_mdcev <- function(pred_data, init_path, mdcev_model) {
   # Initialize and run an MDCEV model prediction

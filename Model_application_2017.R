@@ -28,7 +28,6 @@ N_fail <- 0 # number of non-convergence
 ## load coefficients and process them [Don't need to modify]
 # load(file.path(coefdir, "coefs_apollo.RData"))
 load(paste0('coefs_', diryear, '.RData'))
-load(paste0("coef3_model_", diryear, ".rda"))  # Overwrite model 3 object with new version
 
 # 1
 names(coef1)[1] <- "const"

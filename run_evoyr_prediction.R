@@ -280,8 +280,6 @@ vehmodepredict <- merge(vehmodepredict, households_thisyear, by="headpid")
 
 save(vehmodepredict, file=file.path(rdatdir, paste0("vehmodepredict", baseyear, "_", evoyear, ".Rdata")))
 
-#vehmodepredict[adopt_veh=="suv", vehtype:="suv"][adopt_veh=="truck", vehtype:="pickup"]
-
 #============= step 7: own or lease prediction
 print('predict own/lease')
 tic()

@@ -33,9 +33,13 @@ library(data.table)
   veh_num_car <- veh_num_car %>% mutate(scrap=number-round((carA*vintage^4+carB*vintage^3+carC*vintage^2+carD*vintage+carE)*number/100,0))
   veh_num_truck <- veh_num_truck %>% mutate(scrap=number-round((truckA*vintage^4+truckB*vintage^3+truckC*vintage^2+truckD*vintage+truckE)*number/100,0))
   
+  print(paste('scale the total scrappage by %vehicles in continuing hh','car',car.contHH.ratio, 'truck',truck.contHH.ratio))
   veh_num_car$scrap_contHH = floor(veh_num_car$scrap * car.contHH.ratio) # scale to the continuing hh portion of the vehicles
-  veh_num_truck$scrap_contHH = floor(veh_num_truck$scrap * car.contHH.ratio) # scale to the continuing hh portion of the vehicles
+  # correct typo 2/28/2023: should scale by truck.contHH.ratio
+  veh_num_truck$scrap_contHH = floor(veh_num_truck$scrap * truck.contHH.ratio) # scale to the continuing hh portion of the vehicles
   
+  # veh_num_truck$scrap_contHH = floor(veh_num_truck$scrap * car.contHH.ratio) # scale to the continuing hh portion of the vehicles
+  # 
   # plot
   # kk = gather(veh_num_car, 'counttype','number', -vintage)
   # ggplot(kk, aes(x = vintage, y = number, color = countype)) +geom_point()

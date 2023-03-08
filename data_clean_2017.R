@@ -96,8 +96,8 @@ households <- households %>% mutate(retired = case_when(LIF_CYC9 == 1 | LIF_CYC1
 households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)))
 
 # Geolocation data
-# rent percentage by tract
-residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
+# rent percentage by tract, update 12/5/2022: use block_id instead of block_group_id
+residential <- residential %>% mutate(tract_id = as.numeric(substr(block_id, 1, 10)))
 # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
 perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                             renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)

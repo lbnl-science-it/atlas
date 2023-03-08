@@ -45,7 +45,7 @@ new_used <- function(data){
   
   # error metric is the RMSE root mean squred errors, 
   # note here we have one outcome class, for multi-class outcome, this will be useful
-  err.metric = sqrt(mean(share.pred-share.target)^2) # initialize the error metric
+  err.metric = sqrt(mean((share.pred-share.target)^2)) # initialize the error metric
   
   while(err.metric > threshold){
     print('calibrating new/used choice constant')

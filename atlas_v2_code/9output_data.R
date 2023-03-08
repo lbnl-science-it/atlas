@@ -12,7 +12,7 @@ if (initialyear==T){
                                  veh_trans_decision, by=c("headpid", "vehicle_id"))[,.(headpid, vehicle_id, vehtype, pred_power, 
                                                                         ownlease, deltayear, adopt_fuel, adopt_veh, acquire_year)][
                                                                           ,vehicle_tag:="old"]
-  vehicles_thisyear_tmp = vehicles_thisyear_tmp%>% mutate(ownlease = recode(pred_own, '1' = 'own', '0' ='lease'))
+  vehicles_thisyear_tmp = vehicles_thisyear_tmp%>% mutate(ownlease = recode(ownlease, '1' = 'own', '0' ='lease'))
   
 }
 #vehmodepredict.sav = vehmodepredict

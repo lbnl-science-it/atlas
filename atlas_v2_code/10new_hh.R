@@ -15,7 +15,7 @@ hhmatch_varnames = c('Nemp_1','Nemp_2','Nemp_3',
 
 match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demodat){
   # function to find the most similar hh in the cur_hhids to the new_hhids in a given geoid
-  # from_tract: a single tract id
+  # from_tract: a single tract id of new hh
   # new_hhids:  new hh ids , we use headpid here, that are new to the dataset
   # cur_hhids: unique current hh ids that we already have hh fleet predicted
   # varnames: attributes in the demodat that are used to compute similarity between the new_hh to cur_hh
@@ -50,7 +50,7 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
     todat = demodat%>% 
       select(matches(c('headpid','tract_geoid',varnames)))%>%
       filter(headpid %in% cur_hhids)%>%
-      sample_n(10000)
+      sample_n(5000)
   }
   
   # LJ 10/2022: shuffle the existing hh so that the pick of first min hh is random, this increase the speed and stability
@@ -92,7 +92,7 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
 # now loop through new hh racts
 matchinghhid <- function(demodat){
   # now loop through new hh racts
-  from_tracts = unique(demodat[demodat$headpid %in% new_hhids,'tract_geoid'])$tract_geoid
+  from_tracts = (unique(demodat[demodat$headpid %in% new_hhids,'tract_geoid']))$tract_geoid
   
   # this can be 
   tic()
@@ -103,22 +103,21 @@ matchinghhid <- function(demodat){
                              demodat=demodat))
   toc()
   
-  matched_ids = res
-  return(matched_ids)
+
+  return(res)
 }
 
 
 matchinghhid_parallel <- function(demodat, Npe){
   library(tidyverse)
   library(dplyr)
-  library(apollo)
   library(tictoc)
   library(parallel)
   library(doParallel)
   library(foreach)
   # now loop through new hh racts
-  from_tracts = unique(demodat[demodat$headpid %in% new_hhids,'tract_geoid'])$tract_geoid
-#  print(paste('from_tracts total #',length(from_tracts)))
+  from_tracts = (unique(demodat[demodat$headpid %in% new_hhids,'tract_geoid']))$tract_geoid
+  #  print(paste('from_tracts total #',length(from_tracts)))
   registerDoParallel(cores = Npe) 
   tic()
   res <- foreach(i=1:length(from_tracts), 

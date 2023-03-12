@@ -19,8 +19,8 @@
 # Note that preceding this docker call, the preprocessing py code already took .h5 output from urbansim
 # and extracted various data tables into .csv file
 
-useparser = F  # currently we do not use the parser for directory and year input
-# useparser = T  # we do want to use cmd argument parsing now -Tin
+# useparser = F  # currently we do not use the parser for directory and year input
+useparser = T  # we do want to use cmd argument parsing now -Tin
 
 if(useparser){
   suppressPackageStartupMessages(library("optparse"))

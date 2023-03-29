@@ -19,8 +19,8 @@
 # Note that preceding this docker call, the preprocessing py code already took .h5 output from urbansim
 # and extracted various data tables into .csv file
 
-# useparser = F  # currently we do not use the parser for directory and year input
-useparser = T  # we do want to use cmd argument parsing now -Tin
+#useparser = F  # currently we do not use the parser for directory and year input
+ useparser = T  # we do want to use cmd argument parsing now -Tin
 
 if(useparser){
   suppressPackageStartupMessages(library("optparse"))
@@ -40,8 +40,17 @@ if(useparser){
                 help="indicator of whether to read from beam derived zscore of job accessibility by transit", default="0" ) ,
 
     # LJ add 9/21/2022, option to run static or dynamic
-    make_option(c("--mod"), dest="mod", action="store", help="static (1) or dynamic (2) ", default="1" )
+    make_option(c("--mod"), dest="mod", action="store", help="static (1) or dynamic (2) ", default="1" ),
 
+    # LJ add 3/28/2023, option to select from adopt scenario folder to read the adopt inputs
+    # current available options: "baseline", "ess_cons", "zev_mandate"
+    make_option(c("--adscen"),  dest="adscen",  action="store", help="path to subfolder of adopt for scenario inputs", default= "baseline" ),
+    
+    # LJ add 3/28/2023, option to select a multiplier separately for rebate and tax_credit for sensitivity analysis
+    # default value is 0, i.e. no purchasing incentives
+    make_option(c("--rebfactor"), dest="rebfactor", action="store", help="multiplier for cash rebate", default="0" ),
+    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" ),
+    
 
   )
   # output year is the current year in urbansim output, for atlas_v2, prediction of output year will use vehicle predictions from previous years
@@ -69,6 +78,16 @@ if(useparser){
   print( opt$npe )
   print ( "ATLAS running mode selection: 1-static or 2-dynamic")
   print( opt$mod )
+  
+  print( "ADOPT scenario folder used is ")
+  print(opt$adscen)
+  
+  print("multiplier applied to cash rebate incentive to vehicle purchasing")
+  print(opt$rebfactor)
+
+  print("multiplier applied to tax credit incentive to vehicle purchasing")
+  print(opt$taxfactor)
+  
 
   print( "sample of households to process. \nCaution: only works for static version, dynamic version will always use full population")
   if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
@@ -82,7 +101,11 @@ if(useparser){
   outputyear    = strtoi(opt$outputyear, base=10)
   nsample = strtoi(opt$nsample, base=10) # number of households to subsample
   Npe = strtoi(opt$npe, base=10) # number of processors to use
-
+  
+  adscen = opt$adscen # adopt scenario folder
+  rebfactor = strtoi(opt$rebfactor, base = 10) # multiplier to cash rebate
+  taxfactor = strtoi(opt$taxfactor, base = 10) # multiplier to tax credit
+  
   # read option of whether read from beam derived accessibility, 0, 1
   beamac = strtoi(opt$beamac, base=10)
 
@@ -145,6 +168,10 @@ if(!useparser){ # if not using parser, define things here for debuging process
   if(atlas_runmod == 2 & nsample !=0){
     stop('Error - atlas run mode 2: dynamic evolution should only run on full sample')
   }
+  
+  adscen = "baseline" # adopt scenario folder
+  rebfactor = 0 # multiplier to cash rebate
+  taxfactor = 0 # multiplier to tax credit
   
   
 }

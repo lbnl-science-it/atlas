@@ -12,7 +12,7 @@ print('predicting vehicle level transaction outcome')
 tic()
 tmp <- dispose_apply(vehicles_thisyear)
 toc()
-table(tmp$nextwave_status)/nrow(tmp)
+print(table(tmp$nextwave_status)/nrow(tmp))
 
 #tmp.sav = tmp; 
 # dispose      keep   replace 
@@ -38,7 +38,7 @@ households_thisyear <- addition_clean(vehicles_thisyear, households_thisyear)
 tmp2 <- addition(households_thisyear)
 toc()
 
-table(tmp2$addition)/nrow(tmp2)
+print(table(tmp2$addition)/nrow(tmp2))
 # LJ comment: no addition means no change in the level of vehicles
 # addition 1  addition 2  decrease 1  decrease 2 no addition 
 # 0.119505420 0.009272607 0.221495383 0.037608140 0.612118450 
@@ -90,7 +90,7 @@ tmp0 <- tmp[gap>0 & nextwave_status=="dispose" & ncar_thiswave>=3] %>%
 
 tmp <- as.data.table(setdiff(tmp, tmp0))[,nextwave_status:="keep"] %>% rbind(tmp0)
 toc()
-table(tmp$nextwave_status)/nrow(tmp)
+print(table(tmp$nextwave_status)/nrow(tmp))
 
 # dispose      keep   replace 
 # 0.1515261 0.6567116 0.1917623
@@ -151,8 +151,9 @@ toc()
 used_invent <- vehicles_dispose_return[,keyby=.(adopt_veh, adopt_fuel, vintage_category), 
                                        .(n=.N, model_year=median(deltayear))]  # summarize used inv by adopt veh fuel type, and vintage category
 
-# need to double check this
+# need to double check this !! --> it is correct, if there is minivan, it will be recoded as minvan to be consistent with adopt
 used_invent <- used_invent %>% mutate(adopt_veh = recode(adopt_veh, 'minivan' = 'minvan'))
+
 # save the intermedium datasets
 save(vehicles_dispose, file=file.path(rdatdir, paste0("vehdispose_", baseyear, "_", evoyear, ".Rdata")))
 save(vehicles_dispose_return, file=file.path(rdatdir, paste0("usedvehinvent_", baseyear, "_", evoyear, ".Rdata")))
@@ -197,7 +198,7 @@ toc()
 print('predicting new vehicle choices')
 if(local.factor){print('calibrate based on adopt data further scaled by local factor')}
 tic()
-res.tmp <- vehmodechoice_new(vehmodepredict.new, local.factor =local.factor) # local.factor = T in setup_evoyr, --> adopt ev/phev sales scaled further by carb data
+res.tmp <- vehmodechoice_new(vehmodepredict.new, local.factor =local.factor) # if local.factor = T in setup_evoyr, --> adopt ev/phev sales scaled further by carb data
 toc()
 vehmodepredict.new = res.tmp[[1]]
 coef3new.tuned = res.tmp[[2]]
@@ -275,7 +276,8 @@ vehmodepredict <- vehmodepredict %>%
 # add acquirement year, set to mid year
 vehmodepredict <- vehmodepredict %>%
   mutate(acquire_year = evoyear-1)
-# merge the prediction of added and replacement vehicles 
+
+# merge the prediction of added and replacement vehicles with hh attributes
 vehmodepredict <- merge(vehmodepredict, households_thisyear, by="headpid")
 
 save(vehmodepredict, file=file.path(rdatdir, paste0("vehmodepredict", baseyear, "_", evoyear, ".Rdata")))
@@ -291,7 +293,7 @@ toc()
 vehmodepredict$maindriver_id = NA
 
 #============= step 9: clean the vehicle data and household data for next wave
-print('combining output data for continuing hh ')
+print('combining replacement and addition vehicle choices with kept/continuing vehicles to create vehicle outputs for continuing hh in next wave')
 source(paste0(v2codedir,'/9output_data.R'))
 
 #============= step 10: match new hh to the hh with known veh prediction in the evolution year

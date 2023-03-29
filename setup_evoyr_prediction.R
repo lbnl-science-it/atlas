@@ -13,7 +13,7 @@ library(fastDummies)
 
 
 # folders
-adoptdir <- file.path(inputdir,'adopt')
+adoptdir <- file.path(inputdir,'adopt',adscen) # LJ 3/28/2023, read from scenario subfolder
 rdatdir <- file.path(outputdir, 'rdata') # to store intermediate results
 if(!file.exists(rdatdir)){dir.create(rdatdir)}
 
@@ -24,8 +24,13 @@ v2coefdir <- file.path('atlas_v2_coefs')
 
 #==============Start: modeling domain specific parameter====================================#
 #  for SFB, it will changeg for austin
-local.us.ratio = 0.023  # ratio of sale totals between local, i.e. SFB, and U.S. this number is derived based on SFB vs US total vehicles
-ladj.factor = 0.83 # lifetime adjustment factor: the ratio between actual sales (carb derived sale) and the scaled adopt sale from national to SFB. 
+# local.us.ratio = 0.023  # ratio of sale totals between local, i.e. SFB, and U.S. this number is derived based on SFB vs US total vehicles
+# ladj.factor = 0.83 # lifetime adjustment factor: the ratio between actual sales (carb derived sale) and the scaled adopt sale from national to SFB. 
+
+# LJ 3/28/2023: now adopt sales are already scaled to sfb, no adjustment factors are needed here
+local.us.ratio = 1
+ladj.factor = 1
+
 # scrappage rate parameters
 carA=0.000298; carB=-0.01336; carC=0.142273; carD=-1.18379; carE=94.94659;
 truckA=0.000486; truckB=-0.02414; truckC=0.382124; truckD=-3.31743; truckE=104.3316;
@@ -34,18 +39,10 @@ truckA=0.000486; truckB=-0.02414; truckC=0.382124; truckD=-3.31743; truckE=104.3
 # calibrated factor using 2018 and 2019 sales data compared to carb derived
 local.factor = F # whether to apply a CARB data derived correction factor (cuurrently only work for 2019)
 
-# # previous testing of evolving 1 step
-# adopt.fnm = 'adopt_raw.csv'
-# adopt.us = fread(file.path(adoptdir, adopt.fnm)) %>%
-#   filter(year %in% c(2018,2019)) 
-# Nsale = sum(adopt.us$sales)
-# adoptfuelshare = adopt.us[, by=fueltype, .(prob.hat=sum(sales)/Nsale)]
-
 # LJ 2/5/2023. now use the long term example adopt data processed by Connor
 adopt.fnm = paste0('new_vehicles_biannual_values_', baseyear, '.csv')
 adopt.us = fread(file.path(adoptdir, adopt.fnm)) 
 Nsale = sum(adopt.us$total_sales)
-#adoptfuelshare = adopt.us[, by=fueltype, .(prob.hat=sum(total_sales)/Nsale)]
 
 # carb 2year derived sales share in 2019 in SFB
 if(local.factor){
@@ -57,39 +54,17 @@ if(local.factor){
 
 #============== End: modeling domain specific parameter====================================#
 
-
-
-# 
-#   
-# atlasdata <- "./data/atlas_v1"
-# codes <- "./atlas_v2"
-# garphdir <- "./graph"
-# coefdir <- "./coefs"
-# output <- "./outputdata/V8/nourban/"
-# inputdir <- "./input"
-# # numiter <- 1
-# yearstep <- 2
-# # set year
-# simyear = 2015 + yearstep*1 # = 2017, note this will be named baseyear now
-# # evolution year, the output year
-# evoyear <- simyear + yearstep-1 #middle year
-# evoyear <- simyear + yearstep
-
-# load household data and person covariates data
-# load(file=file.path(demosdata, paste0("households", simyear, ".Rdata"))) # households0
-# load(file=file.path(demosdata, paste0("persons", simyear, ".Rdata"))) # persons0
-# load(file=file.path(demosdata, paste0("persons", evoyear, ".Rdata"))) # persons1
-
+#============== start: modeling steps ====================================#
 # load the baseyear output Rdata
 load(file=file.path(inputdir, paste0('year',baseyear),"vehicles_output.RData"))
 load(file=file.path(inputdir, paste0('year',baseyear),"households_output.RData"))
 
-# LJ 2/14/2023: add acquire_year variable to initial year outputs
+# LJ 2/14/2023: add acquire_year variable to initial year outputs and use NA for maindriver and never predict it in evoyears
 if(baseyear==iniyear){vehicles_output$acquire_year = NA; vehicles_output$maindriver_id = NA}
 
-hhv0 = households_output%>%select(headpid, nvehicles); rm(households_output) # LJ 2/13/2023: the newhhflag is relative to the previous output year
+hhv0 = households_output%>%dplyr::select(headpid, nvehicles); rm(households_output) # LJ 2/13/2023: the newhhflag is the baseyear relative to its own previous timestep hence not useful in evoyear prediction.
 vehicles0 = vehicles_output%>%
-  select(headpid, vehicle_id, vehtype, pred_power, 
+  dplyr::select(headpid, vehicle_id, vehtype, pred_power, 
          ownlease, deltayear, adopt_fuel,
          adopt_veh, acquire_year, maindriver_id, vintage_category)
 rm(vehicles_output)
@@ -97,16 +72,14 @@ rm(vehicles_output)
 households_thisyear <- households0 %>% merge(hhv0, by="headpid") %>% drop_na() # baseyear data used for prediction
 households_thisyear$urban_cbsa <- 0 # for now we zero out this variable to improve prediction
 vehicles_thisyear <- households_thisyear  %>% merge(vehicles0, by=c("headpid")) # predictors for vehicle level transaction
-persons_thisyear <- persons0 %>% merge(households_thisyear %>% select(headpid), by="headpid")
+persons_thisyear <- persons0 %>% merge(households_thisyear %>% dplyr::select(headpid), by="headpid")
 #persons_nextwave <- persons1 %>% merge(households1)
 # LJ 10/18/2022, headpid that appeared in both baseyear and evoyear
 cur_hhids = intersect(households0$headpid,households1$headpid) # hhids that in both years (baseyear and evoyear)
 cont.veh = vehicles0[vehicles0$headpid %in% cur_hhids,] # vehicles in the continuing hh
 
 print(paste('continuing hh is',length(cur_hhids)/length(households1$headpid),'of the evoyear hh'))
-
-# hhv0 <- households0_fromv1
-# rm(households0_fromv1)
+print(paste('continuing hh is',length(cur_hhids)/length(households0$headpid),'of the baseyear hh'))
 
 
 #=====================================Preload needed variables=========================================
@@ -156,6 +129,10 @@ car.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_car))/nrow(vehicles
 # fraction of truck (vehicles other than car bodytype) represented by the continuing hh #0.9341 # 0.8849684
 truck.contHH.ratio = nrow(cont.veh%>%filter(vehtype %in% scrap_truck))/nrow(vehicles0%>%filter(vehtype %in% scrap_truck)) 
 
+print(paste('fraction of cars represented by continuing hh',car.contHH.ratio))
+print(paste('fraction of trucks (non-car) represented by continuing hh',truck.contHH.ratio))
+
+
 source(paste0(v2codedir,'/3scrappage.R'))
 
 #============= step4: predict the new or used vehciels
@@ -193,7 +170,6 @@ source(paste0(v2codedir,'/4new_used.R'))
 
 # LJ 2/5/2023
 adopt.us.new = adopt.us
-#adopt.us.new$bodytype[adopt.us.new$bodytype=="suv"] <- "SUV" # to match coefs
 names(adopt.us.new)[1:3] <- c("adopt_fuel", "adopt_veh", "price")
 local.sale.new = adopt.us.new%>%
   mutate(sales = floor(adopt.us.new$total_sales * local.us.ratio * veh.contHH.ratio*ladj.factor)) # LJ 10/22/2022: further adjuustment by lifetime factor

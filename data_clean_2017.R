@@ -10,7 +10,13 @@ jobs <- read.table(file.path(inputdir, paste0('year',outputyear),"jobs.csv"), he
 names(persons)[1] <- "person_id"
 
 # Accessbility data
-load(file.path(inputdir, "accessbility_2015.RData"))
+if(beamac>0){ # if read from beam, read the accessibility computed from beam by preprocess.py, which was saved in the inputdir/yearXXXX
+  job <- read.table(file.path(inputdir, paste0('year',outputyear),paste0("accessibility_",outputyear,"_tract.csv")), header=T, sep=",")
+}else{# else read from observed data
+  load(file.path(inputdir, "accessbility_2015.RData"))
+}
+
+
 
 # availability of transit/bus by tract, only used for 2010 parameters
 if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}
@@ -90,8 +96,8 @@ households <- households %>% mutate(retired = case_when(LIF_CYC9 == 1 | LIF_CYC1
 households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)))
 
 # Geolocation data
-# rent percentage by tract
-residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
+# rent percentage by tract, update 12/5/2022: use block_id instead of block_group_id
+residential <- residential %>% mutate(tract_id = as.numeric(substr(block_id, 1, 10)))
 # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
 perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                             renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
@@ -104,6 +110,7 @@ households <- households %>% merge(perrent, by="tract_id")
 rm(perrent)
 
 # Accessbility data
+# 
 names(job)[1] <- "tract_id"
 households <- households %>% merge(job, by="tract_id", all.x=TRUE)
 households$access_zscore[is.na(households$access_zscore)] <- 0
@@ -133,6 +140,9 @@ households <- households %>% mutate(hhage_34=case_when(age_of_head<=34~1, TRUE~0
                                   hhage_65=case_when(age_of_head>=65~1, TRUE~0))
 
 ##### generate some variable for later estimation ######
+# LJ flag: this is only to move the uno and sero and id number for later model estimation usage
+# is there a reason why this needs to be here? --> no, but still leave it here for now
+# used for estimation used in old apollo code
 households$uno <- 1
 households$sero <- 0
 column5 <- names(households[5])
@@ -148,7 +158,9 @@ households <- households %>% relocate(id, .after=sero)
 ############################ person level data clean ###################################
 # Age
 persons <- persons %>% filter(age >= 18)
-names(persons)[2] <- "R_AGE_IMP"
+# LJ flag: this will cause problem when the order of variables in person table change
+#names(persons)[2] <- "R_AGE_IMP"
+persons = persons %>% rename(R_AGE_IMP = age)
 # Education
 persons <- persons %>% mutate(below_high = case_when(edu <= 15 ~ 1, TRUE~0),
                                               high = case_when(edu ==16 | edu == 17 ~ 1, TRUE~0),

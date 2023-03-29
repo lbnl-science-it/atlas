@@ -19,7 +19,9 @@
 # tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
 
 # FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4 Debian bullseye (11) R 4.0.4 Rscript works in U16.04 
-FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4
+#--FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4 #v1 integration
+#FROM ghcr.io/lbnl-science-it/atlas:base       this worked, but prefer explicit version
+FROM ghcr.io/lbnl-science-it/atlas:vBase1.2.0
 
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
 #FROM tin6150/atlas:base
@@ -66,9 +68,12 @@ RUN echo ''  ;\
     echo "Done installing packages cran packages - layer 2" | tee -a _TOP_DIR_OF_CONTAINER_     ;\
     date | tee -a      _TOP_DIR_OF_CONTAINER_   ;\
     cd /     ;\
-    # tmp for test with Ling's tmp code
-    mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
-    mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    #// tmp for test with Ling's tmp code
+    #// mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
+    #// mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
+    # I/O dir for sfb-v2 , with DIR_INFO.txt added if repo is copied to /
+    mkdir -p /atlast_input   ;\
+    mkdir -p /atlast_output  ;\
     pwd  ;\
     echo ""
 
@@ -76,20 +81,20 @@ COPY Dockerfile* /opt/gitrepo/container_layer2/
 COPY . /
 COPY . /opt/gitrepo/atlas/
 
+ENV DBG_ATLAS_CODE_VER "Atlas sfb-v2.0.8 -- Docker.atlas 2023.0328 adopt scen"
+ENV DBG_DOCKERFILE Dockerfile.atlas
+ENV TZ America/Los_Angeles 
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Atlas v1.0.4 -- Dockerfile.atlas 2022.0207.2146a d11   r404"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "$DBG_ATLAS_CODE_VER"           | tee -a  _TOP_DIR_OF_CONTAINER_   \
   && echo  "cleaned Dockerfile.atlas"             \
   && echo  "Grand Finale Dockerfile.atlas"
 
 
 
-ENV DBG_ATLAS_CODE_VER "Atlas v1.0.4 -- Docker.atlas 2022.0207.2146a d11 r404"
-ENV DBG_DOCKERFILE Dockerfile.atlas
-ENV TZ America/Los_Angeles 
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]

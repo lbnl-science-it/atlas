@@ -1,0 +1,32 @@
+coef,description_long,HH_1,HH_2,HH_3
+adopt_vehminvan,Minivan,-0.273916023,-0.414434492,-0.746964482
+adopt_vehSUV,SUV,0.271096756,0.30906543,0.257723112
+adopt_vehtruck,Truck,-0.386874604,-0.436212568,-0.621991433
+adopt_vehvan,Van,-0.274753963,-0.620061549,-0.414281433
+veh_age_bins1-2yr,1-2 Years,-0.228831455,-0.130490061,-0.130662182
+veh_age_bins>=3yr,3+ Years,-0.260664151,-0.225267106,-0.176009927
+rebate,Cash Rebate in $k,0.034175189,0.067412162,0.084487961
+tax_credit,Tax Credit in $k,0.019271997,0.03693783,0.02093514
+log(range),Natural Log of Vehicle Range,0.451358401,0.551494164,0.757279396
+annmain,Annual Maintenance Cost,-0.001102214,-0.000489477,-0.000994428
+cpmile,Fuel Cost per Mile,-0.016004946,-0.010830567,-0.02238457
+mpge,Miles per Gallon Equivalent,0.006822169,0.00506445,0.000798816
+accel,Acceleration,-0.043302273,-0.031206103,-0.049173996
+refueltime_mins,Refueling Time,-0.000765725,-0.00057949,-0.000322698
+price,Vehicle Price in $k,-0.097818783,-0.131289614,-0.110222333
+pickup_pickupowerTRUE,Current Pickup Owne interacting with  Pickup choice,1.165615309,0.538544122,0.794774384
+replace_veh_matchTRUE,"Replacing a vehicle, considering a type matching something in their existing fleet",-0.22255641,0.632663703,-0.044338161
+adopt_fuelcng,CNG (reference is conv),0.022237208,0.096788978,-0.073179163
+adopt_fuelev,BEV (reference is conv),0.15057827,0.441852417,0.215120084
+adopt_fuelfuelcell,Hydrogen (reference is conv),0.35727474,0.287284678,-0.300816376
+adopt_fuelhybrid,Hybrid (reference is conv),0.098520878,0.124277831,0.057056263
+adopt_fuelphev,PHEV (reference is conv),-0.129138212,0.05546019,-0.264801335
+kids_vehminvan,having Kids (<=16 yrs)  * Minivan,0.748594303,0.825068099,0.841198959
+kids_vehSUV,having Kids (<=16 yrs) * SUV,0.399362146,0.352261419,0.338191483
+kids_vehtruck,having Kids (<=16 yrs)  * Truck,0.59270718,0.523204532,0.636894222
+kids_vehvan,having Kids (<=16 yrs)  * Van,0.654469493,0.840082332,0.742236364
+elec_owner_ADOPTvehev,"Owns an electric-type vehicle (BEV, PHEV, hybrid, hydrogen), interacting with BEV choice",1.169458343,0.861734385,1.400607
+elec_owner_ADOPTvehfuelcell,"Owns electric-type vehicle (BEV, PHEV, hybrid, hydrogen),  interacting with hydrogen",0.528533624,0.379019779,1.473245621
+elec_owner_ADOPTvehhybrid,"Owns electric-type vehicle (BEV, PHEV, hybrid, hydrogen),  interacting with hybrid",0.55337567,0.479062304,0.3419825
+elec_owner_ADOPTvehphev,"Owns electric-type vehicle (BEV, PHEV, hybrid, hydrogen),  interacting with PHEV",1.00807284,0.770158867,0.891952776
+price:log(income_bin_mid),Price ($k) * Natural Log of Income ($),0.006308231,0.009184315,0.007772809

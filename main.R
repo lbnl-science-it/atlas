@@ -49,7 +49,7 @@ if(useparser){
     # LJ add 3/28/2023, option to select a multiplier separately for rebate and tax_credit for sensitivity analysis
     # default value is 0, i.e. no purchasing incentives
     make_option(c("--rebfactor"), dest="rebfactor", action="store", help="multiplier for cash rebate", default="0" ),
-    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" ),
+    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" )
     
 
   )

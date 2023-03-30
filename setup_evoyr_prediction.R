@@ -170,7 +170,9 @@ source(paste0(v2codedir,'/4new_used.R'))
 
 # LJ 2/5/2023
 adopt.us.new = adopt.us
-names(adopt.us.new)[1:2] <- c("adopt_fuel", "adopt_veh")
+#names(adopt.us.new)[1:3] <- c("adopt_fuel", "adopt_veh", "price")
+adopt.us.new = adopt.us.new %>% dplyr::rename(adopt_fuel = fueltype, adopt_veh = bodytype)
+if('year' %in% names(adopt.us.new)){adopt.us.new = adopt.us.new %>% dplyr::select(-year)}
 local.sale.new = adopt.us.new%>%
   mutate(sales = floor(total_sales * local.us.ratio * veh.contHH.ratio*ladj.factor)) # LJ 10/22/2022: further adjuustment by lifetime factor
 

@@ -14,7 +14,11 @@ tunepveh.map <- data.frame(adopt= c('minvan','suv','truck','van'),
                            coef = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan'))
 # First: lookup clean # LJ: note that we do not have incentives in the data yet, so here we manually set them to zero
 # i.e. prepare choice set. Note that if some choice is not available, it should be set here with 0 dummy
-vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA){
+#vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA){
+# LJ 4/5/2023: in this function, we set the rebate and tax_credit to 0, because in adopt inputs, connor put in some default values using outdated functions
+vehmodeset_clean <- function(datainput){
+  # datainput: vehicle attributes read from adopt
+  
   require(tidyr)
   require(dplyr)
   require(fastDummies)
@@ -22,7 +26,7 @@ vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA
   data <- datainput
   # veh type dummies
   data <- fastDummies::dummy_cols(data, select_columns = "adopt_veh") 
-  tmp.swap <- names(data %>% select(contains('adopt_veh_')))
+  tmp.swap <- names(data %>% dplyr::select(contains('adopt_veh_')))
   renm <- vehnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
   dropnm <- vehnm.map%>%filter(!(dummy.nms %in% tmp.swap))
   setnames(data, renm$dummy.nms, renm$coef.nms)  
@@ -50,7 +54,7 @@ vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA
   # veh fueltype dummies
   data <- fastDummies::dummy_cols(data, select_columns = "adopt_fuel")
   
-  tmp.swap <- names(data %>% select(contains('adopt_fuel_')))
+  tmp.swap <- names(data %>% dplyr::select(contains('adopt_fuel_')))
   renm <- pwrnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
   dropnm <- pwrnm.map%>%filter(!(dummy.nms %in% tmp.swap))
   setnames(data, renm$dummy.nms, renm$coef.nms)  
@@ -69,15 +73,17 @@ vehmodeset_clean <- function(datainput, rebate.input = NA, tax_credit.input = NA
   # other veh charateristics variables
   data <- data %>% mutate(`log(range)` = log(range))
   
-  # incentives if non-na values are given, otherwide there should be rebate and tax_credit in the attributes
-  if(!is.na(rebate.input)){data <- data %>% mutate(rebate = rebate.input)}
-  if(!is.na(tax_credit.input)){data <- data %>% mutate(tax_credit = tax_credit.input)}
-
+  # # incentives if non-na values are given, otherwide there should be rebate and tax_credit in the attributes
+  # if(!is.na(rebate.input)){data <- data %>% mutate(rebate = rebate.input)}
+  # if(!is.na(tax_credit.input)){data <- data %>% mutate(tax_credit = tax_credit.input)}
+  data <- data %>% mutate(rebate = 0,
+                          tax_credit = 0)
   return(data)
 }
 
 # Second: prepare vehmodepredict for new vehicles
 vehmodepredict_newfunc <- function(data){
+  # data is the household attributes
   data = merge(data[,m:=1][,id:= as.numeric(row.names(.SD))], lookup%>%mutate(m=1), by="m", allow.cartesian=TRUE)
   
   data <- data[,has_kid:=(Nkid_4+Nkid_5_11+Nkid_12_15)>0][, kids_vehminvan:=adopt_vehminvan*has_kid][
@@ -95,14 +101,23 @@ vehmodepredict_newfunc <- function(data){
                                               nextwave_status=="replace"&has_van==1&adopt_vehvan==1, 1,
                                               nextwave_status=="replace"&has_pickup==1&adopt_vehtruck==1, 1, default = 0)]
   
+  print('computing incentives based on hh attributes and vehicle attributes')
+  tic()
+  data$tax_credit <- apply_new_credits(data) * taxfactor
+  data$rebate <- apply_new_rebates(data) * rebfactor
+  toc()
+  
   coefnames <- coef3new$coef
   coefnames <- c(coefnames, "id", "ncar_thiswave", "adopt_veh", "adopt_fuel", "headpid")
+  
+  # add incentives here --> Connor
+  
   data = data[, ..coefnames] # this step dropped the un-appear constant columns from the veh data
   return(data)
 }
 
 # Third: tune the coefficients
-vehmodechoice_new <- function(data, local.factor = T){ # LJ 10/22/2022: if local.factor == T, apply a calibrated correction factor
+vehmodechoice_new <- function(data, local.factor = F){ # LJ 10/22/2022: if local.factor == T, apply a calibrated correction factor
   vehmodepredict.new1 <- data[ncar_thiswave<=1]
   vehmodepredict.new2 <- data[ncar_thiswave==2]
   vehmodepredict.new3 <- data[ncar_thiswave>=3]

@@ -49,7 +49,7 @@ if(useparser){
     # LJ add 3/28/2023, option to select a multiplier separately for rebate and tax_credit for sensitivity analysis
     # default value is 0, i.e. no purchasing incentives
     make_option(c("--rebfactor"), dest="rebfactor", action="store", help="multiplier for cash rebate", default="0" ),
-    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" ),
+    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" )
     
 
   )
@@ -170,8 +170,8 @@ if(!useparser){ # if not using parser, define things here for debuging process
   }
   
   adscen = "baseline" # adopt scenario folder
-  rebfactor = 0 # multiplier to cash rebate
-  taxfactor = 0 # multiplier to tax credit
+  rebfactor = 1 # multiplier to cash rebate
+  taxfactor = 1 # multiplier to tax credit
   
   
 }

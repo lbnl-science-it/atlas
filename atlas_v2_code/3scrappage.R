@@ -38,7 +38,6 @@ library(data.table)
   # correct typo 2/28/2023: should scale by truck.contHH.ratio
   veh_num_truck$scrap_contHH = floor(veh_num_truck$scrap * truck.contHH.ratio) # scale to the continuing hh portion of the vehicles
   
-  # veh_num_truck$scrap_contHH = floor(veh_num_truck$scrap * car.contHH.ratio) # scale to the continuing hh portion of the vehicles
   # 
   # plot
   # kk = gather(veh_num_car, 'counttype','number', -vintage)

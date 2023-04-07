@@ -24,9 +24,10 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
   require(dplyr)
   require(tidyr)
   varnames = hhmatch_varnames
+  demodat <- as.data.frame(demodat) # demodat is a data.table object, to avoid run error, force it to data.frame here.
   fromdat = demodat%>%  # new hh
-    select(matches(c('headpid','tract_geoid',varnames))) %>%
-    filter(headpid %in% new_hhids, tract_geoid == from_tract)
+    dplyr::select(matches(c('headpid','tract_geoid',varnames))) %>%
+    dplyr::filter(headpid %in% new_hhids, tract_geoid == from_tract)
   
   fromvec = t(as.matrix(fromdat[,c(-1,-2)]))
   
@@ -41,8 +42,8 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
   }
   
   todat = demodat%>% # existing hh
-    select(matches(c('headpid','tract_geoid',varnames)))%>%
-    filter(headpid %in% cur_hhids, tract_geoid == from_tract)
+    dplyr::select(matches(c('headpid','tract_geoid',varnames)))%>%
+    dplyr::filter(headpid %in% cur_hhids, tract_geoid == from_tract)
   
   if(dim(todat)[1]<3){
     # if tract id has some error
@@ -60,28 +61,9 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
   
   toids = todat$headpid
   
-
-  
   # compute distance
   dis = apply(fromvec, 2, function(center) {
     colSums((tovec - center)^2)})
-  
-  
-  # # return random hhid of a min distance: LJ 10/18/2022, no longer needed, now we have shuffle done earlier
-  # minidx<- function(x){
-  #   minx = min(x,na.rm = T)
-  #   
-  #   if(length(x[x == minx])==1){
-  #     return(toids[x == minx])
-  #   }else{
-  #     # if more than one best match, random select
-  #     return(sample(toids[x==minx],1))
-  #   }
-  # }
-  
-  #kk = data.frame(new_hhid = tmpnewids, matched_id = apply(dis, 2, minidx))
-  
- # return(data.frame(new_hhid = tmpnewids, matched_id = apply(dis, 2, minidx)))
   
   return(data.frame(new_hhid = tmpnewids, matched_id = toids[apply(dis, 2, which.min)]))
   
@@ -92,6 +74,10 @@ match_family2 <- function(from_tract, new_hhids,cur_hhids, hhmatch_varnames,demo
 # now loop through new hh racts
 matchinghhid <- function(demodat){
   # now loop through new hh racts
+  
+  require(dplyr)
+  require(tidyr)
+  
   from_tracts = (unique(demodat[demodat$headpid %in% new_hhids,'tract_geoid']))$tract_geoid
   
   # this can be 

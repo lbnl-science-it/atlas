@@ -1,5 +1,7 @@
 # run evolution year prediction
 
+print(paste('current simulation year is',simyear))
+
 initialyear <- (baseyear == iniyear) # whether the base year is the initial year (iniyear = 2017), if so, we do not have the vehicle acquirement year variable "acquire_year"
 library(tictoc)
 #============= step1: apply the replace/dispose/keep model
@@ -181,18 +183,24 @@ save(vehmodepredict.new, vehmodepredict.used, file=file.path(rdatdir, paste0("ne
 #============= step5: apply the vehicle choice model to new vehicle pool
 print('Now in step of predicting choices for new veh choice occassions')
 N.occassion = nrow(vehmodepredict.new)
+print(paste('there are',N.occassion, 'new veh choice occassions to predict.'))
 # choose the new vehicle choice set
 print('preparing choice set')
 
 # LJ 2/14/2023: as coef3 will be tuned separately for new vs used veh choices, copy coef3 to a new name
 coef3new = coef3
-lookup <- vehmodeset_clean(adopt.us.new,rebate.input = 0, tax_credit.input = 0) # note in this version, the incentives are set to 0
+#lookup <- vehmodeset_clean(adopt.us.new,rebate.input = 0, tax_credit.input = 0) # note in this version, the incentives are set to 0
+lookup <- vehmodeset_clean(adopt.us.new) # LJ 4/5/2023 in this version, we set rebate and tax_credit to 0 in this step and compute them in next cleaning step after merging with hh attributes
 
-# prepare the new vehicle data for mode choice
+# prepare the new vehicle data for mode choice, merging to hh attributes and  online calculation of incentives
 print('preparing predictors')
 tic()
 vehmodepredict.new <- vehmodepredict_newfunc(vehmodepredict.new)
 toc()
+
+print('save the predictors including hh attriubtes and calculated incentives')
+save(vehmodepredict.new, file=file.path(rdatdir, paste0("vehmodepredict.new.predictors", baseyear, "_", evoyear, ".Rdata")))
+
 
 # tune coef3 and predict mode
 print('predicting new vehicle choices')
@@ -209,6 +217,8 @@ vehmodepredict.new <- vehmodepredict.new[,deltayear:=fcase(random<0.5, as.numeri
 save(vehmodepredict.new, coef3new.tuned, file=file.path(rdatdir, paste0("vehmodepredict.new", baseyear, "_", evoyear, ".Rdata")))
 save(coef3new.tuned, file=file.path(rdatdir, paste0("coef3new.tuned", evoyear,".Rdata")))
 
+rm(lookup)
+rm(N.occassion)
 #============= step 6: apply the vehicle choice model to old vehicle pool
 print('Now in step of predicting used vehicle choices')
 tic()
@@ -229,11 +239,18 @@ coef3used = coef3
 # choose the used vehicle choice set
 print('preparing predictors')
 attribute <- as.data.table(attribute %>% merge(used_invent, by=c("adopt_veh", "adopt_fuel", "model_year")))
-lookup <- vehmodeset_clean_used(attribute,rebate.input = 0, tax_credit.input = 0)
+# replace NA with 0 in the bev_energy column
+attribute$bev_energy[is.na(attribute$bev_energy)]<-0
+#lookup <- vehmodeset_clean_used(attribute,rebate.input = 0, tax_credit.input = 0)
+lookup <- vehmodeset_clean_used(attribute) # LJ 4/5/2023, in this version, we set rebate and tax_credit to 0 in this step and compute them in next cleaning step after merging with hh attributes
 
 # prepare the used vehicle data for mode choice
 vehmodepredict.used <- vehmodepredict_usedfunc(vehmodepredict.used)
 gc()
+
+print('save the predictors including hh attriubtes and calculated incentives')
+save(vehmodepredict.used, file=file.path(rdatdir, paste0("vehmodepredict.used.predictors", baseyear, "_", evoyear, ".Rdata")))
+
 # tune coef3 and predict mode
 print('predicting used vehicle choice and calibrate constants to match used inventory')
 used.tmpres <- vehmodechoice_used(vehmodepredict.used)

@@ -11,18 +11,14 @@ tunepwr.map <- data.frame(adopt = c('cng','ev','fuelcell','hybrid','phev'),
 tunepveh.map <- data.frame(adopt= c('minvan','suv','truck','van'),
                            coef = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan'))
 
-tunepwr.map <- data.frame(adopt = c('cng','ev','fuelcell','hybrid','phev'),
-                          coef = c('adopt_fuelcng','adopt_fuelev','adopt_fuelfuelcell','adopt_fuelhybrid','adopt_fuelphev'))
-
-tunepveh.map <- data.frame(adopt= c('minvan','suv','truck','van'),
-                           coef = c('adopt_vehminvan','adopt_vehSUV','adopt_vehtruck','adopt_vehvan'))
-
 tuneage.map <- data.frame(adopt= c('12+ years','6~11 years'),
                           coef = c('veh_age_bins>=13yr','veh_age_bins7-12yr'))
 
 
 # First: lookup clean
-vehmodeset_clean_used <- function(datainput,rebate.input = 0, tax_credit.input = 0){
+#vehmodeset_clean_used <- function(datainput,rebate.input = 0, tax_credit.input = 0){
+# LJ 4/5/2023: in this function, we set the rebate and tax_credit to 0, because in adopt inputs, connor put in some default values using outdated functions
+vehmodeset_clean_used <- function(datainput){
   require(tidyr)
   require(dplyr)
   require(fastDummies)
@@ -30,7 +26,7 @@ vehmodeset_clean_used <- function(datainput,rebate.input = 0, tax_credit.input =
   data <- datainput
   # veh type dummies and rename to coef variables
   data <- fastDummies::dummy_cols(data, select_columns = "adopt_veh") 
-  tmp.swap <- names(data %>% select(contains('adopt_veh_')))
+  tmp.swap <- names(data %>% dplyr::select(contains('adopt_veh_')))
   renm <- vehnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
   dropnm <- vehnm.map%>%filter(!(dummy.nms %in% tmp.swap))
   setnames(data, renm$dummy.nms, renm$coef.nms)  
@@ -55,7 +51,7 @@ vehmodeset_clean_used <- function(datainput,rebate.input = 0, tax_credit.input =
   
   data <- fastDummies::dummy_cols(data, select_columns = "adopt_fuel")
   
-  tmp.swap <- names(data %>% select(contains('adopt_fuel_')))
+  tmp.swap <- names(data %>% dplyr::select(contains('adopt_fuel_')))
   renm <- pwrnm.map%>%filter(dummy.nms %in% tmp.swap) # to get the vehicle types appeared in attribute
   dropnm <- pwrnm.map%>%filter(!(dummy.nms %in% tmp.swap))
   setnames(data, renm$dummy.nms, renm$coef.nms)  
@@ -70,8 +66,8 @@ vehmodeset_clean_used <- function(datainput,rebate.input = 0, tax_credit.input =
   # other veh charateristics variables
   data <- data %>% mutate(`log(range)` = log(range))
   
-  # incentives for used vehicles are 0
-  data <- data %>% mutate(rebate = rebate.input, tax_credit = tax_credit.input)
+  data <- data %>% mutate(rebate = 0,
+                          tax_credit = 0)
   
   return(data)
 }
@@ -94,10 +90,16 @@ vehmodepredict_usedfunc <- function(data){
                                                 nextwave_status=="replace"&has_suv==1&adopt_vehSUV==1, 1,
                                                 nextwave_status=="replace"&has_van==1&adopt_vehvan==1, 1,
                                                 nextwave_status=="replace"&has_pickup==1&adopt_vehtruck==1, 1, default = 0)]
-  
+
+  print('computing incentives based on hh attributes and vehicle attributes')
+  tic()
+  data$tax_credit <- apply_used_credits(data) * taxfactor
+  data$rebate <- apply_used_rebates(data) * rebfactor
+  toc()
+    
   coefnames <- coef3used$coef
   coefnames <- c(coefnames, "id", "ncar_thiswave", "adopt_veh", "adopt_fuel", "vintage_category", "headpid")
-  data = data[, ..coefnames]
+  data = data[, ..coefnames] # here we dropped the columns of alternative specific constants that are not in coefs
   return(data)
 }
 

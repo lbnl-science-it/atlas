@@ -2,6 +2,11 @@
 
 Container with R and necessary packages to run BEAM/Atlas vehicle simulation.
 
+v1.0.4 container: ghcr.io/lbnl-science-it/atlas:v1.0.4
+
+testing R and libs in the base container image:
+docker run -it --entrypoint=bash ghcr.io/lbnl-science-it/atlas:vBase1.0.4    
+
 
 Example running R script via Docker
 -----------------------------------

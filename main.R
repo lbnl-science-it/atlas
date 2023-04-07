@@ -170,8 +170,8 @@ if(!useparser){ # if not using parser, define things here for debuging process
   }
   
   adscen = "baseline" # adopt scenario folder
-  rebfactor = 0 # multiplier to cash rebate
-  taxfactor = 0 # multiplier to tax credit
+  rebfactor = 1 # multiplier to cash rebate
+  taxfactor = 1 # multiplier to tax credit
   
   
 }

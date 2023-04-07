@@ -1,5 +1,8 @@
 #============= data combination for next wave
+
+# vehicles_thisyear_tmp is the kept vehicle from current wave (i.e. baseyear)
 if (initialyear==T){
+  
   vehicles_thisyear_tmp <- merge(merge(vehicles_thisyear, veh_trans_decision, by=c("headpid", "vehicle_id"))[nextwave_status=="keep"],
                                  veh_trans_decision, by=c("headpid", "vehicle_id"))[,.(headpid, vehicle_id, vehtype, 
                                                                         pred_power, ownlease, deltayear, adopt_fuel, adopt_veh)][
@@ -16,8 +19,11 @@ if (initialyear==T){
   
 }
 #vehmodepredict.sav = vehmodepredict
+# vehmodepredict is the replacement and addition vehicles
 vehmodepredict <- vehmodepredict[,.(headpid, vehtype, pred_power, adopt_veh, adopt_fuel, ownlease, deltayear,acquire_year)][
   ,vehicle_tag:="new"]
+
+# the following code is moved to run_evoyr_prediction.R only for replacement and addition vehicles before the rdata is saved.
 # vehmodepredict <- setnames(vehmodepredict, c("pred_own"), c("ownlease"))[
 #   ,pred_power:=fcase(adopt_fuel %in% c("ev",'fuelcell'), "AEV", adopt_fuel %in% c("conv",  "cng"), "ICE",
 #                      adopt_fuel %in% c("hybrid"), "Hybrid", adopt_fuel %in% c("phev"), "PHEV")][

@@ -52,6 +52,9 @@ if(local.factor){
 
 }
 
+
+# incentive related literature values
+
 #============== End: modeling domain specific parameter====================================#
 
 #============== start: modeling steps ====================================#
@@ -149,14 +152,17 @@ set.seed(375874638)
 # Nsale = sum(adopt.us$total_sales)
 # adoptfuelshare = adopt.us[, by=fueltype, .(prob.hat=sum(total_sales)/Nsale)]
 
-threshold <- 0.001
+threshold <- 0.005 # 0.001. 4/5/2023 LJ: now relax the error threshold to increase the speed
 # local sale totals of new vehicles
 local.sale = floor(Nsale * local.us.ratio * veh.contHH.ratio *ladj.factor ) # LJ 10/22/2022: further adjuustment by lifetime factor
 
 load(file.path(v2coefdir, 'newused_coefs.RData')) 
 source(paste0(v2codedir,'/4new_used.R'))
 
-#============= step 5: apply the vehicle choice model to new vehicles
+#============= load incentive functions and data for step 5 and 6 ================#
+source('./incentives/setup_incentive.R') # load the global data for incentive functions
+source('./incentives/incentives_functions.R')
+#============= step 5: apply the vehicle choice model to new vehicles ================#
 # load adopt new sale data 2018-2019
 
 # # previous testing 1 step
@@ -173,6 +179,7 @@ adopt.us.new = adopt.us
 #names(adopt.us.new)[1:3] <- c("adopt_fuel", "adopt_veh", "price")
 adopt.us.new = adopt.us.new %>% dplyr::rename(adopt_fuel = fueltype, adopt_veh = bodytype)
 if('year' %in% names(adopt.us.new)){adopt.us.new = adopt.us.new %>% dplyr::select(-year)}
+
 local.sale.new = adopt.us.new%>%
   mutate(sales = floor(total_sales * local.us.ratio * veh.contHH.ratio*ladj.factor)) # LJ 10/22/2022: further adjuustment by lifetime factor
 
@@ -184,22 +191,22 @@ adoptvehshare = local.sale.new[, by=adopt_veh, .(prob.hat=sum(sales)/localNsales
 coef3 <- fread(file.path(v2coefdir, 'final_coefficients_cec2017_v6.csv'))
 source(paste0(v2codedir,'/5new_mode_choice.R'))
 
-#============= step 6: apply the vehicle choice model to used vehicles
+#============= step 6: apply the vehicle choice model to used vehicles ================#
 # load the attribute data
 
 # # previous testing 1 step
 # attribute <- read.csv(file.path(adoptdir, 'adopt_epa_used_vehicles_2018.csv')) # read the mid year used vehicle attributes
 
 attribute <- read.csv(file.path(adoptdir, paste0('used_vehicles_',baseyear,'.csv'))) # read the mid year used vehicle attributes
-attribute <- attribute %>% rename(adopt_veh=bodytype, adopt_fuel=fueltype)
+attribute <- attribute %>% dplyr::rename(adopt_veh=bodytype, adopt_fuel=fueltype)
 #attribute <- attribute  #%>% mutate(adopt_veh = recode(adopt_veh, 'minvan' = 'minivan'))
 source(paste0(v2codedir,'/6used_mode_choice.R'))
 
-#============= step 7: own or lease prediction
+#============= step 7: own or lease prediction ================#
 load(file=file.path(v2coefdir, "ownlease_dynamic_estimates.RData"))
 #============= step 8: predict main driver for new hh and newly acquired vehicles
 load(file=file.path(v2coefdir, "main_driver.rda"))
 source(paste0(v2codedir,'/8main_driver_unified.R'))
 
-#============= step 10: match new hh to the hh with known veh prediction in the evolution year
+#============= step 10: match new hh to the hh with known veh prediction in the evolution year ================#
 source(paste0(v2codedir,'/10new_hh.R'))

@@ -39,6 +39,7 @@ if(beamac>0){ # if read from beam, read the accessibility computed from beam by 
 }
 
 cpi <- read_csv(file.path(inputdir,"cpi.csv")) # ratio between 2019 and 2010 to convert demos 2010 dollars to 2019 used in psid estiamtes
+
 load(file.path(inputdir,"psid_names.Rdat"))
 
 
@@ -399,3 +400,6 @@ persons0 <- persons0[, edu:=fcase(edu>=16 & edu<=17, "high", edu>=18 & edu<=19, 
                                                                         employ:=fcase(worker==0&senior==0, "not_employed", worker==0&senior==1, "retired", 
                                                                                       default = "employed")]
 save(persons0, file = file.path(inputdir, paste0('year',evoyear),'persons0.RData'))
+
+# remove cpi so that it can be reloaded later in incentive calculation 6/20/2023 LJ
+rm(cpi)

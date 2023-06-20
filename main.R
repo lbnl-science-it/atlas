@@ -49,7 +49,10 @@ if(useparser){
     # LJ add 3/28/2023, option to select a multiplier separately for rebate and tax_credit for sensitivity analysis
     # default value is 0, i.e. no purchasing incentives
     make_option(c("--rebfactor"), dest="rebfactor", action="store", help="multiplier for cash rebate", default="0" ),
-    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" )
+    make_option(c("--taxfactor"), dest="taxfactor", action="store", help="multiplier for tax credit", default="0" ),
+
+    # LJ add 6/20/2023. option to discount the incentive dollars
+    make_option(c("--discIncent"), dest="discIncent", action="store", help="whether to discount incentive dollars (1=T, 0=F)", default="0" )
     
 
   )
@@ -88,6 +91,9 @@ if(useparser){
   print("multiplier applied to tax credit incentive to vehicle purchasing")
   print(opt$taxfactor)
   
+  print('whether the incentives are discounted to the 2019 dollars')
+  print(opt$discIncent)
+  
 
   print( "sample of households to process. \nCaution: only works for static version, dynamic version will always use full population")
   if(opt$nsample == 0){ print('full sample')}else{print(opt$nsample)}
@@ -105,6 +111,7 @@ if(useparser){
   adscen = opt$adscen # adopt scenario folder
   rebfactor = strtoi(opt$rebfactor, base = 10) # multiplier to cash rebate
   taxfactor = strtoi(opt$taxfactor, base = 10) # multiplier to tax credit
+  discIncent = strtoi(opt$discIncent, base = 10) # 0/1 value to determine whether discount the incentive dollars
   
   # read option of whether read from beam derived accessibility, 0, 1
   beamac = strtoi(opt$beamac, base=10)

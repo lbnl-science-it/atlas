@@ -28,3 +28,6 @@ export NO_COLOR=1
     apt-get -y --quiet install git git-all  ;
 # next one is for BILD-AQ
     apt-get -y --quiet install python3-pip  ;
+# gcp atlas instance  have python3, just no python
+#    apt-get -y --quiet install python3  ;
+

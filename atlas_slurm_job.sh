@@ -25,7 +25,7 @@
 hostname
 date
 uptime
-sleep 3600
+sleep 6
 
 
 
@@ -42,12 +42,25 @@ cat /proc/mounts
 echo ---------------------------------------
 echo "date before sleep"
 date
-sleep 180
+sleep 18
 echo "date after sleep"
 date
 
+
+echo "Up next: run singularity atlas container"
+
 SIMG_SIF=/global/home/users/tin/gs/singularity-repo/atlas_sfb_v2.sif
 
-singularity exec -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  df /mnt
-singularity exec -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  uptime
-singularity exec -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  /usr/bin/Rscript /main.R
+#singularity exec -B /global/scratch/users/tin/inbox:/mnt $SIMG_SIF  /usr/bin/Rscript /main.R
+
+singularity exec -B $SIMG_SIF  uptime
+
+singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_input/test_tin.txt"
+singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_output/test_tin.txt"
+singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF /usr/bin/Rscript /main.R
+
+
+# singularity shell -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF
+
+
+sleep 31

@@ -53,7 +53,7 @@ SIMG_SIF=/global/home/users/tin/gs/singularity-repo/atlas_sfb_v2.sif
 
 #singularity exec -B /global/scratch/users/tin/inbox:/mnt $SIMG_SIF  /usr/bin/Rscript /main.R
 
-singularity exec -B $SIMG_SIF  uptime
+singularity exec $SIMG_SIF  uptime
 
 singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_input/test_tin.txt"
 singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_output/test_tin.txt"

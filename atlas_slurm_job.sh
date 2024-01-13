@@ -49,6 +49,8 @@ date
 
 echo "Up next: run singularity atlas container"
 
+# pre pulled image using command:
+# singularity pull --name atlas_sfb_v2.sif docker://ghcr.io/lbnl-science-it/atlas:sfb-v2.0.12
 SIMG_SIF=/global/home/users/tin/gs/singularity-repo/atlas_sfb_v2.sif
 
 #singularity exec -B /global/scratch/users/tin/inbox:/mnt $SIMG_SIF  /usr/bin/Rscript /main.R

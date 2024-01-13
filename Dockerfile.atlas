@@ -72,8 +72,8 @@ RUN echo ''  ;\
     #// mkdir -p /global/data/transportation/ATLAS/static/urbansim ;\
     #// mkdir -p /global/data/transportation/ATLAS/static/urbansim/model_application ;\
     # I/O dir for sfb-v2 , with DIR_INFO.txt added if repo is copied to /
-    mkdir -p /atlast_input   ;\
-    mkdir -p /atlast_output  ;\
+    mkdir -p /atlas_input   ;\
+    mkdir -p /atlas_output  ;\
     pwd  ;\
     echo ""
 

@@ -121,7 +121,7 @@ other are used for data cleaning somewhere else, should be able to live without 
 
 
 
-vertion tagging
+version tagging
 ===============
 
 Best if update Dockerfile.atlas with version/tag info, make that commit, then tag.
@@ -137,3 +137,21 @@ git tag -a  vBase1.2.0 d4259f7 -m "base layer for sfb-v2"
 git push -u origin  vBase1.2.0
 
 git tag -a sfb-v2.0.1 779104a -m "sfb v2.0.1 main.R update to use --mod 1|2"
+
+
+
+Singularity in lrc
+==================
+
+
+cd /global/home/users/tin/gs/singularity-repo
+singularity pull --name atlas_sfb_v2.sif docker://ghcr.io/lbnl-science-it/atlas:sfb-v2.0.12
+#  pull as above worked in lrc
+
+singularity shell -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  
+singularity exec  -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  /usr/bin/Rscript /main.R
+
+# -B physical_host_path:path_inside_container   
+
+
+

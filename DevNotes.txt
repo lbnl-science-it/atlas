@@ -145,7 +145,8 @@ Singularity in lrc
 
 
 cd /global/home/users/tin/gs/singularity-repo
-singularity pull --name atlas_sfb_v2.sif docker://ghcr.io/lbnl-science-it/atlas:sfb-v2.0.12
+singularity pull --name atlas_sfb_v2.sif      docker://ghcr.io/lbnl-science-it/atlas:sfb-v2.0.12
+#singularity pull --name atlas_sfb_v2.0.12.sif docker://ghcr.io/lbnl-science-it/atlas:sfb-v2.0.12
 #  pull as above worked in lrc
 
 singularity shell -B /global/scratch/users/tin/inbox:/mnt atlas_sfb_v2.sif  

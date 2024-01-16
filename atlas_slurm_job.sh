@@ -1,8 +1,8 @@
 #!/bin/sh
 
 
-#SBATCH --job-name=slurm-test-lr5
-#SBATCH --partition=lr5
+#SBATCH --job-name=slurm-lr
+#SBATCH --partition=lr6
 ###SBATCH -n 4
 #SBATCH --qos=lr_normal
 ####SBATCH --qos=lr_lowprio
@@ -10,7 +10,7 @@
 #SBATCH --nodes=1
 #####SBATCH --mem-per-cpu=2G
 # Wall clock limit in hh:mm:ss ::
-#SBATCH --time=00:10:00     
+#SBATCH --time=71:59:00     
 ###SBATCH --mail-type=all
 #SBATCH --mail-type=fail
 #SBATCH --mail-user=tin@lbl.gov
@@ -57,9 +57,14 @@ SIMG_SIF=/global/home/users/tin/gs/singularity-repo/atlas_sfb_v2.sif
 
 singularity exec $SIMG_SIF  uptime
 
-singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_input/test_tin.txt"
-singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_output/test_tin.txt"
-singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF /usr/bin/Rscript /main.R
+#singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_input/test_tin.txt"
+#singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF bash -c "date >> /atlas_output/test_tin.txt"
+# singularity exec -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF /usr/bin/Rscript /main.R
+
+# /global/scratch/users/yuhan_wang/sources/ATLAS/
+# /global/scratch/users/tin//ATLAS/atlas/atlas_input
+
+singularity exec -B /global/scratch/users/tin//ATLAS/atlas/atlas_input:/atlas_input -B /global/scratch/users/tin//ATLAS/atlas/atlas_output:/atlas_output $SIMG_SIF /usr/bin/Rscript /main.R
 
 
 # singularity shell -B /global/scratch/users/tin/atlas/atlas_input:/atlas_input  -B /global/scratch/users/tin/atlas/atlas_output:/atlas_output $SIMG_SIF

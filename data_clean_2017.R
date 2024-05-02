@@ -1,5 +1,6 @@
 #################Clean the data from Urbansim ###############
 #Read the original data
+tic('clean base year')
 households <- read.table(file.path(inputdir, paste0('year',outputyear),"households.csv"), header=T, sep=",")
 blocks <- read.table(file.path(inputdir,paste0('year',outputyear),"blocks.csv"), header=T, sep=",")
 persons <- read.table(file.path(inputdir, paste0('year',outputyear),"persons.csv"), header=T, sep=",")
@@ -186,4 +187,4 @@ if(diryear == 2010){
   rm(list = c('jobs','residential','blocks'))
 }
 
-
+toc()

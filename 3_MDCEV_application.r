@@ -21,7 +21,7 @@ init_predict_mdcev <- function(pred_data, init_path, mdcev_model) {
   }
   names(database)[which(colnames(database)=="annual_nonmotor_new")] <<- "outside"
 
-  source(init_path)
+  source(init_path) # this is where the 3_MDCEV_initialization_full_sf.r is sourced.
   # script defines the constructor function, alternatives_list, and apollo_inputs
   apollo_probabilities <- apollo_prob_constructor(alternatives_list)
 

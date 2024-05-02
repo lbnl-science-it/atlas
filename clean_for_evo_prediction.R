@@ -1,7 +1,9 @@
 # prepare data for prediction of evolution year (i.e. baseyear + 2)
 # the data cleaning involves both the base year and the evolution year
 
-# initialization of the clustering
+# 
+
+
 library(stats)
 library(tidyverse)
 library(dplyr)
@@ -23,13 +25,17 @@ blocks0 <- fread(file.path(inputdir, paste0('year',baseyear),"blocks.csv"))
 persons0 <- fread(file.path(inputdir, paste0('year',baseyear),"persons.csv")) 
 names(persons0)[1] <- "person_id"
 
+
+
 # demos data for evolution year
 households1 <- fread(file.path(inputdir, paste0('year',evoyear),"households.csv"))
 grave1 <- fread(file.path(inputdir, paste0('year',evoyear),"grave.csv"))
 persons1 <- fread(file.path(inputdir, paste0('year',evoyear),"persons.csv"))
 names(persons1)[1] <- "person_id"
 
-
+# LJ 4/28/2024 coerce edu type to integer to accommondate the tutorial data and full data
+persons1$edu = as.integer(persons1$edu)
+persons0$edu = as.integer(persons0$edu)
 
 # Accessbility data
 if(beamac>0){ # if read from beam, read the accessibility computed from beam by preprocess.py, which was saved in the inputdir/yearXXXX
@@ -67,8 +73,8 @@ households0_sup <- persons0[, spouseTF:=relate==1][
 
 households0 <- merge(households0, households0_sup, by="household_id")
 
-# process from person data: hh_edu
-households0_sup <- persons0[, edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+# process from person data: hh_edu # LJ 4/23/2024, data.table needs the same datatype, so add as.integer(0) to turn 0 into integer
+households0_sup <- persons0[, edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate<=1][, by = household_id, .(edu = max(edu))][, hh_edu:=fcase(
     edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
     edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][, edu:= NULL]
@@ -108,23 +114,23 @@ households1_sup <- households1[,income_fu.nextwave:=income*cpi][,.(household_id,
 households0 <- merge(households0, households1_sup, by="household_id", all.x = T)[
   ,ch_income:=(income_fu.nextwave-income_fu)/1000]
 
-# households variables [change status]: ch_EduTF
-households1_sup <- persons1[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+# households variables [change status]: ch_EduTF # LJ change 4/23/2024: as.integer(0) to make the type consistent
+households1_sup <- persons1[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate==0][,by=household_id, .(edu=max(edu))][, hd_edu.next:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                      edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                        ,edu:=NULL]
 
-households1_sup2 <- persons1[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+households1_sup2 <- persons1[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate==1][,by=household_id, .(edu=max(edu))][, sp_edu.next:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                      edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                        ,edu:=NULL]
 
-households0_sup <- persons0[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+households0_sup <- persons0[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate==0][,by=household_id, .(edu=max(edu))][, hd_edu:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                 edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                   ,edu:=NULL]
 
-households0_sup2 <- persons0[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+households0_sup2 <- persons0[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate==1][,by=household_id, .(edu=max(edu))][, sp_edu:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                 edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                   ,edu:=NULL]
@@ -254,7 +260,12 @@ households0 <- households0[,`:=`  (
   inc_bin1XlargeHH = inc_5bins_1 * largeHH,
   inc_bin2XlargeHH = inc_5bins_2 * largeHH)]
 
-# rename identifier variables
+# # debug save
+# households0.sav = households0
+# households0_sup.sav = households0_sup
+
+
+# rename identifier variables to be consistent with PSID data
 households0 <- setnames(households0, "household_id", "headpid")
 households0 <- households0[,`:=`(year=2017,California=1,tract_geoid= as.numeric(substr(block_id, 1, 10)))] 
 
@@ -263,11 +274,15 @@ dropcol <- setdiff(names(households0), psid_names)
 households0 <- households0[, !..dropcol]
 
 # add death data: deathTF
-# pretend the data are available now
-households0_sup <- grave1[,by=household_id, .(deathTF=.N>0)]
-households0_sup <- setnames(households0_sup, "household_id", "headpid")
-households0 <- merge(households0, households0_sup, by="headpid", all.x = T)[,newhhflag:=0]
-households0$deathTF[is.na(households0$deathTF)==T] <- F
+# pretend the data are available now # LJ 4/23/2024 update: add a line for error control in case of no death (i.e. empty grave data)
+if(dim(grave1)[1]>0){
+  households0_sup <- grave1[,by=household_id, .(deathTF=.N>0)]
+  households0_sup <- setnames(households0_sup, "household_id", "headpid")
+  households0 <- merge(households0, households0_sup, by="headpid", all.x = T)[,newhhflag:=0]
+  households0$deathTF[is.na(households0$deathTF)==T] <- F
+}else{ # if empty
+  households0$deathTF = F
+}
 
 # add geolocation variables from base year
 names(job)[1] <- "tract_geoid"
@@ -296,7 +311,9 @@ for(j in cols){
   set(households0, i=NULL, j=j, value= as.numeric(households0[[j]]))
 }
 
+if(midout){
 save(households0, file = file.path(inputdir, paste0('year',evoyear),'households0.RData'))
+}
 
 #################Clean the  evoyear data for new hh matching#####################
 # process from person data: N_emp "kid_4_TF"      "kid_5_11_TF"   "kid_12_15_TF"
@@ -314,13 +331,13 @@ households1_sup <- persons1[,spouseTF:=(relate==1)][,by=household_id,.(spouseTF=
 households1 <- merge(households1, households1_sup, by="household_id")
 
 # process from person data: hh_edu "hh_edu_<hi"    "hh_edu_>clg"   "hh_edu_clg"    "hh_edu_hi"
-households1_sup <- persons1[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+households1_sup <- persons1[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   relate<=1][,by=household_id, .(edu=max(edu, na.rm = TRUE))][, hh_edu:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                               edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                                 ,edu:=NULL]
 
 persons1_0 <- persons1[!(persons1$household_id %in% households1_sup$household_id),]
-households1_sup <- rbind(persons1_0[,edu:=fcase(is.na(edu)==T, 0, is.na(edu)==F, edu)][
+households1_sup <- rbind(persons1_0[,edu:=fcase(is.na(edu)==T, as.integer(0), is.na(edu)==F, edu)][
   , by=household_id, .(edu=max(edu, na.rm = TRUE))][, hh_edu:=fcase(edu>=16 & edu<=17, "hi", edu>=18 & edu<=19, "some clg",
                                                                     edu>=20 & edu<=21, "clg", edu>=22, ">clg", default = "<hi")][
                                                                       ,edu:=NULL], households1_sup)
@@ -374,9 +391,9 @@ households1 <- setnames(households1, "household_id", "headpid")
 households1 <- merge(households1, persons1[,by="household_id", .(fu_size=.N)][
   ,headpid:=household_id][,!c("household_id")],by="headpid")
 
-
+if(midout){
 save(households1, file = file.path(inputdir, paste0('year',evoyear),'households1.RData'))
-
+}
 
 # clean person data for evoyear main driver analysis
 print('clean evolution year person data for main driver prediction')
@@ -388,8 +405,9 @@ persons1 <- persons1[, edu:=fcase(edu>=16 & edu<=17, "high", edu>=18 & edu<=19, 
                                       default = "<hi")][,senior:=(edu>=65)][,
                                                                             employ:=fcase(worker==0&senior==0, "not_employed", worker==0&senior==1, "retired", 
                                                                                           default = "employed")]
-save(persons1, file = file.path(inputdir, paste0('year',evoyear),'persons1.RData'))
-
+if(midout){
+  save(persons1, file = file.path(inputdir, paste0('year',evoyear),'persons1.RData'))
+}
 # save person0 just in case for post analysis for now
 persons0 <- persons0[,.(household_id, age, sex, edu, worker, race, person_id)]
 persons0 <- setnames(persons0, c("household_id", "sex", "race", "person_id"), 
@@ -399,7 +417,14 @@ persons0 <- persons0[, edu:=fcase(edu>=16 & edu<=17, "high", edu>=18 & edu<=19, 
                                   default = "<hi")][,senior:=(edu>=65)][,
                                                                         employ:=fcase(worker==0&senior==0, "not_employed", worker==0&senior==1, "retired", 
                                                                                       default = "employed")]
-save(persons0, file = file.path(inputdir, paste0('year',evoyear),'persons0.RData'))
+if(midout){
+  save(persons0, file = file.path(inputdir, paste0('year',evoyear),'persons0.RData'))
+}
 
 # remove cpi so that it can be reloaded later in incentive calculation 6/20/2023 LJ
+rm(households0_sup, households1_sup, persons1_0,households1_sup2)
 rm(cpi)
+gc()
+
+
+

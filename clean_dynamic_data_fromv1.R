@@ -1,15 +1,6 @@
 # Rscripts to generate RData for dynamic evolution from the atlas_v1 outputs
 options(dplyr.summarise.inform = FALSE)
 
-# initialization of the clustering
-library(stats)
-library(tidyverse)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(data.table)
-library(tictoc)
-
 vehicles_output <- vehicles_output %>% rename(headpid=household_id) # headpid is the dynammic model hh identifier
 households_output <- households_output %>% rename(headpid=household_id)
 

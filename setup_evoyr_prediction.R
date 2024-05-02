@@ -37,7 +37,8 @@ truckA=0.000486; truckB=-0.02414; truckC=0.382124; truckD=-3.31743; truckE=104.3
 
 # correction factor for adopt fuel share, using multiplier for ev and phev
 # calibrated factor using 2018 and 2019 sales data compared to carb derived
-local.factor = F # whether to apply a CARB data derived correction factor (cuurrently only work for 2019)
+local.factor = F # whether to apply a CARB data derived correction factor (currently only work for 2019, so always set to false)
+                 # do not use local.factor b/c now adopt has calibrated to SFB sales, so we can directly use adopt sales
 
 # LJ 2/5/2023. now use the long term example adopt data processed by Connor
 adopt.fnm = paste0('new_vehicles_biannual_values_', baseyear, '.csv')
@@ -53,7 +54,7 @@ if(local.factor){
 }
 
 
-# incentive related literature values
+# incentive related literature values (this is included in the inline calculation as a function of income and vehicle attributes)
 
 #============== End: modeling domain specific parameter====================================#
 
@@ -87,7 +88,7 @@ print(paste('continuing hh is',length(cur_hhids)/length(households0$headpid),'of
 
 #=====================================Preload needed variables=========================================
 #============= step 1: apply the replace/dispose/keep model
-yreffect <- 2017
+yreffect <- 2017 # use 2017 fixed effects for any future years
 numalt <- 3 # three status: dispose, replace, keep(default)
 load(file=file.path(v2coefdir, "vehicle_transaction_model1.RData"))
 load(file=file.path(v2coefdir, "vehicle_transaction_model2.RData"))

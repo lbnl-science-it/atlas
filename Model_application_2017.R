@@ -11,7 +11,7 @@ source(paste0('Model_application_functions_',diryear, '.R'))
 num_alt <- 6  # number of alternatives for step 2 estimation (6+)
 num_type <- 5 # number of bodytypes for step 5 estimation (5+)
 num_power <- 4 # number of powertrain for step 7 estimation (5+)
-controls <- list()
+controls <- list() # MDCEV controls
 controls[[1]] <- 5   # UNO - One (Column Index)
 controls[[2]] <- 6   # SERO - Zero (Column Index)
 controls[[3]] <- 7   # Case ID (Column Index)
@@ -23,7 +23,7 @@ Tolerance <- 0.035 # 0.035; # Tolerance limit to match predicted bodytype distri
 max_iteration <- 10 #5; # Maximum number of iterations for the mileage re-allocation algorithm
 nc <- 14;
 
-N_fail <- 0 # number of non-convergence
+N_fail <- 0 # initialize number of non-convergence to record during run time
 
 ## load coefficients and process them [Don't need to modify]
 # load(file.path(coefdir, "coefs_apollo.RData"))

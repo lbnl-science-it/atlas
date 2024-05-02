@@ -12,11 +12,10 @@ vehicles_thisyear <- dipose_clean(vehicles_thisyear, initialyear, yreffect)
 toc()
 print('predicting vehicle level transaction outcome')
 tic()
-tmp <- dispose_apply(vehicles_thisyear)
+tmp <- dispose_apply(vehicles_thisyear) # vehicle level transaction decisions
 toc()
 print(table(tmp$nextwave_status)/nrow(tmp))
 
-#tmp.sav = tmp; 
 # dispose      keep   replace 
 # 0.1953017 0.6081376 0.1965607 
 
@@ -37,10 +36,14 @@ print('predicting household level transaction outcomes')
 tic()
 households_thisyear <- addition_clean(vehicles_thisyear, households_thisyear)
 
-tmp2 <- addition(households_thisyear)
+tmp2 <- addition(households_thisyear) # household transaction decisions
 toc()
 
 print(table(tmp2$addition)/nrow(tmp2))
+
+tmp2.sav = tmp2 # hh decision
+tmp.sav = tmp # veh level decision
+
 # LJ comment: no addition means no change in the level of vehicles
 # addition 1  addition 2  decrease 1  decrease 2 no addition 
 # 0.119505420 0.009272607 0.221495383 0.037608140 0.612118450 
@@ -62,37 +65,74 @@ print('adjust vehicle level disposal decision by hh level vehicle ')
 tic()
 hh3 <- nrow(tmp2[ncar_thiswave==3 & (addition=="decrease 2" | addition=="decrease 1")])
 hh4 <- nrow(tmp2[ncar_thiswave>=4 & (addition=="decrease 2" | addition=="decrease 1")])
+
+# random sample the difference from the hh with dispose decision
+
 veh3 <- unique(tmp[ncar_thiswave==3&nextwave_status=="dispose"], by="headpid")[,c("headpid")]
 veh4 <- unique(tmp[ncar_thiswave>=4&nextwave_status=="dispose"], by="headpid")[,c("headpid")]
 
-if (nrow(veh3)>=hh3){
-  veh3 <- veh3[sample(.N,nrow(veh3)-hh3)]
-}
-if (nrow(veh4)>=hh4){
-  veh4 <- veh4[sample(.N,nrow(veh4)-hh4)]  
-}
+print(paste('N veh disp 3v hh', nrow(veh3)))
+print(paste('N hh disp 3v hh', hh3))
+
+print(paste('N veh disp 4v hh', nrow(veh4)))
+print(paste('N hh disp 4v hh', hh4))
+
+#if (nrow(veh3)>=hh3){
+#  veh3 <- veh3[sample(.N,max(0, nrow(veh3)-hh3))] # LJ 4/24/2024, to be safe, change from original veh3 <- veh3[sample(.N,max(0, nrow(veh3)-hh3))]
+#}
+#if (nrow(veh4)>=hh4){
+#  veh4 <- veh4[sample(.N,max(0, nrow(veh4)-hh4))]  
+#}
+# to be safe:
+  veh3 <- veh3[sample(.N,max(0, nrow(veh3)-hh3))]
+
+  veh4 <- veh4[sample(.N,max(0, nrow(veh4)-hh4))]  
+
 
 # change the status back to keep
-tmp <- (tmp %>% merge(rbind(veh3, veh4)[,m:=1], by="headpid", all.x = T))[m==1, nextwave_status:="keep"][,-c("m")]
-tmp <- merge(tmp[,-c("Ndisp_veh")], tmp[nextwave_status=="dispose"][, .(Ndisp_veh=.N), by="headpid"][,c("headpid", "Ndisp_veh")], 
-             by="headpid", all.x=T)[is.na(Ndisp_veh)==T, Ndisp_veh:=0]
+# Qianmiao's old code
+# tmp <- (tmp %>% merge(rbind(veh3, veh4)[,m:=1], by="headpid", all.x = T))[m==1, nextwave_status:="keep"][,-c("m")]
+# tmp <- merge(tmp[,-c("Ndisp_veh")], tmp[nextwave_status=="dispose"][, .(Ndisp_veh=.N), by="headpid"][,c("headpid", "Ndisp_veh")],
+#              by="headpid", all.x=T)[is.na(Ndisp_veh)==T, Ndisp_veh:=0]
+# 
 
-# second adjustmetn the overprediction of vehicle level disposal decision
-disp_adjust <- merge(tmp2[, .(headpid, Ndisp_hh, nvehicles)], unique(tmp, by = c("headpid", "Ndisp_veh")), by="headpid")[
-  Ndisp_veh>Ndisp_hh & Ndisp_hh!=0 & nvehicles>=3][,gap:=Ndisp_veh-Ndisp_hh][,.(headpid, gap)]
 
-tmp <- merge(tmp, disp_adjust, by="headpid", all.x = T)
-tmp <- tmp[is.na(gap), gap:=0]
+# LJ 4/24/2024 rewrote above, 
+#change the Ndisp_veh = 0, and change the disposed vehcile status back to "keep", do not change other "keep" or "replace" vechile status in the same hh
+# 
+tmp <- tmp[headpid %in% c(veh3$headpid, veh4$headpid), Ndisp_veh := 0][headpid %in% c(veh3$headpid, veh4$headpid) & nextwave_status=="dispose", nextwave_status := "keep"]
+ 
 
-# only adjust for households having 3 or 4+ vehicles
-tmp0 <- tmp[gap>0 & nextwave_status=="dispose" & ncar_thiswave>=3] %>% 
-  group_split(headpid) %>%
-  map2_df(disp_adjust$gap, ~sample_n(.x, size = .y)) %>%
-  rbind(tmp[gap==0 | nextwave_status!="dispose" | ncar_thiswave<3])
+print(table(tmp$nextwave_status)/nrow(tmp))
+table(tmp$nextwave_status)
 
-tmp <- as.data.table(setdiff(tmp, tmp0))[,nextwave_status:="keep"] %>% rbind(tmp0)
+# second adjustmetn the overprediction of vehicle level disposal decision only for disposal >=3
+kk <- merge(tmp2[, .(headpid, Ndisp_hh, nvehicles)], unique(tmp, by = c("headpid", "Ndisp_veh")), by="headpid")[
+   nvehicles>=4, .(headpid, gap = Ndisp_veh - Ndisp_hh, Ndisp_veh)]
+
+mm <- merge(tmp2[, .(headpid, Ndisp_hh, nvehicles)], unique(tmp, by = c("headpid", "Ndisp_veh")), by="headpid")[
+  nvehicles==3, .(headpid, gap = Ndisp_veh - Ndisp_hh, Ndisp_veh)]
+
+Nveh.adj4 = sum(kk$gap)
+Nveh.adj3 = sum(mm$gap)
+
+if(Nveh.adj4>0){ # if nonzero gap
+  tmp0 <- tmp[headpid %in% kk$headpid & nextwave_status == 'dispose'][sample(.N, min(Nveh.adj4, sum(kk$Ndisp_veh))), nextwave_status := 'keep']
+  tmp = rbind(tmp[!(headpid %in% kk$headpid) | nextwave_status != 'dispose'], tmp0)
+  rm(tmp0)
+}
+if(Nveh.adj3>0){
+  tmp0 <- tmp[headpid %in% mm$headpid & nextwave_status == 'dispose'][sample(.N, min(Nveh.adj3, sum(mm$Ndisp_veh))), nextwave_status := 'keep']
+  tmp = rbind(tmp[!(headpid %in% mm$headpid) | nextwave_status != 'dispose'], tmp0)
+  
+}
+
 toc()
 print(table(tmp$nextwave_status)/nrow(tmp))
+
+# year2019
+#dispose      keep   replace 
+# 0.1263762 0.6579751 0.2156487 
 
 # dispose      keep   replace 
 # 0.1515261 0.6567116 0.1917623
@@ -108,14 +148,17 @@ print(table(tmp$nextwave_status)/nrow(tmp))
 # dispose       keep    replace 
 # 0.08203513 0.70249776 0.21546711 
 
-
-print('save the transaction outcomes to rdatdir')
 veh_trans_decision = tmp
 hh_trans_decision = tmp2
+
+if(midout){
+  print('save the transaction outcomes to rdatdir')
+
 tic()
 save(veh_trans_decision,hh_trans_decision, vehicles_thisyear, file = file.path(rdatdir,paste0('transact.outcome.',baseyear,'-',evoyear,'.RData')))
 toc()
 
+}
 
 
 #============= step3: determine the scrappage vehicles and return to market used inventory
@@ -156,11 +199,13 @@ used_invent <- vehicles_dispose_return[,keyby=.(adopt_veh, adopt_fuel, vintage_c
 # need to double check this !! --> it is correct, if there is minivan, it will be recoded as minvan to be consistent with adopt
 used_invent <- used_invent %>% mutate(adopt_veh = recode(adopt_veh, 'minivan' = 'minvan'))
 
+if(midout){
 # save the intermedium datasets
-save(vehicles_dispose, file=file.path(rdatdir, paste0("vehdispose_", baseyear, "_", evoyear, ".Rdata")))
-save(vehicles_dispose_return, file=file.path(rdatdir, paste0("usedvehinvent_", baseyear, "_", evoyear, ".Rdata")))
-save(vehicles_dispose_scrape, file=file.path(rdatdir, paste0("scrappage_", baseyear, "_", evoyear, ".Rdata")))
-save(scraptotals, file=file.path(rdatdir, paste0("scrapcontrol_", baseyear, "_", evoyear, ".Rdata")))
+  save(vehicles_dispose, file=file.path(rdatdir, paste0("vehdispose_", baseyear, "_", evoyear, ".Rdata")))
+  save(vehicles_dispose_return, file=file.path(rdatdir, paste0("usedvehinvent_", baseyear, "_", evoyear, ".Rdata")))
+  save(vehicles_dispose_scrape, file=file.path(rdatdir, paste0("scrappage_", baseyear, "_", evoyear, ".Rdata")))
+  save(scraptotals, file=file.path(rdatdir, paste0("scrapcontrol_", baseyear, "_", evoyear, ".Rdata")))
+}
 save(used_invent, file=file.path(rdatdir, paste0("usedinventory_", baseyear, "_", evoyear, ".Rdata")))
 
 #load(file=file.path(rdatdir, paste0("usedinventory_", baseyear, "_", evoyear, ".Rdata")))
@@ -175,7 +220,9 @@ vehmodepredict.new <- newused[[1]]
 vehmodepredict.used <- newused[[2]]
 toc()
 
+if(midout){
 save(vehmodepredict.new, vehmodepredict.used, file=file.path(rdatdir, paste0("newusedchoice_", baseyear, "_", evoyear, ".Rdata")))
+}
 
 #load(file=file.path(rdatdir, paste0("newusedchoice_", baseyear, "_", evoyear, ".Rdata")))
 
@@ -198,9 +245,10 @@ tic()
 vehmodepredict.new <- vehmodepredict_newfunc(vehmodepredict.new)
 toc()
 
+if(midout){
 print('save the predictors including hh attriubtes and calculated incentives')
 save(vehmodepredict.new, file=file.path(rdatdir, paste0("vehmodepredict.new.predictors", baseyear, "_", evoyear, ".Rdata")))
-
+}
 
 # tune coef3 and predict mode
 print('predicting new vehicle choices')
@@ -214,7 +262,9 @@ coef3new.tuned = res.tmp[[2]]
 # assign continous model year, half to mid year and half to evoyear.
 vehmodepredict.new <- vehmodepredict.new[,deltayear:=fcase(random<0.5, as.numeric(evoyear-1), random>=0.5, as.numeric(evoyear))]
 
+if(midout){
 save(vehmodepredict.new, coef3new.tuned, file=file.path(rdatdir, paste0("vehmodepredict.new", baseyear, "_", evoyear, ".Rdata")))
+}
 save(coef3new.tuned, file=file.path(rdatdir, paste0("coef3new.tuned", evoyear,".Rdata")))
 
 rm(lookup)
@@ -248,8 +298,10 @@ lookup <- vehmodeset_clean_used(attribute) # LJ 4/5/2023, in this version, we se
 vehmodepredict.used <- vehmodepredict_usedfunc(vehmodepredict.used)
 gc()
 
+if(midout){
 print('save the predictors including hh attriubtes and calculated incentives')
 save(vehmodepredict.used, file=file.path(rdatdir, paste0("vehmodepredict.used.predictors", baseyear, "_", evoyear, ".Rdata")))
+}
 
 # tune coef3 and predict mode
 print('predicting used vehicle choice and calibrate constants to match used inventory')
@@ -268,7 +320,9 @@ n1 <- nrow(vehmodepredict.used[vintage_category=="0~5 years"])
 n2 <- nrow(vehmodepredict.used[vintage_category=="6~11 years"])
 n3 <- nrow(vehmodepredict.used[vintage_category=="12+ years"])
 
-# LJ 2/13/2023,  update vintage here, because these categories are by now still defined relative to base year
+# LJ 2/13/2023,  set continous model year from age categories, 
+#  because these categories are by now still defined relative to base year, as choice model used mid_year for age attributes, we added 2
+
 vehmodepredict.used$deltayear[vehmodepredict.used$vintage_category=="0~5 years"] <- evoyear-
   floor(runif(n1, min=2, max=6.99999))
 vehmodepredict.used$deltayear[vehmodepredict.used$vintage_category=="6~11 years"] <- evoyear-
@@ -278,8 +332,10 @@ vehmodepredict.used$deltayear[vehmodepredict.used$vintage_category=="12+ years"]
 
 toc()
 
-
+if(midout){
 save(vehmodepredict.used, coef3used.tuned, file=file.path(rdatdir, paste0("vehmodepredict.used", baseyear, "_", evoyear, ".Rdata")))
+}
+
 save(coef3used.tuned, file=file.path(rdatdir, paste0("coef3used.tuned", evoyear,".Rdata")))
 
 vehmodepredict <- rbind(vehmodepredict.used[,!c("id", "random")], vehmodepredict.new[,!c("id", "random")][
@@ -297,7 +353,9 @@ vehmodepredict <- vehmodepredict %>%
 # merge the prediction of added and replacement vehicles with hh attributes
 vehmodepredict <- merge(vehmodepredict, households_thisyear, by="headpid")
 
+if(midout){
 save(vehmodepredict, file=file.path(rdatdir, paste0("vehmodepredict", baseyear, "_", evoyear, ".Rdata")))
+}
 
 #============= step 7: own or lease prediction
 print('predict own/lease')
@@ -313,29 +371,39 @@ vehmodepredict$maindriver_id = NA
 print('combining replacement and addition vehicle choices with kept/continuing vehicles to create vehicle outputs for continuing hh in next wave')
 source(paste0(v2codedir,'/9output_data.R'))
 
+# LJ 4/24/2024 print out the veh ownership distribution from the continuing households
+print('predicted num hh by num veh owned in continuing hh in the output year ')
+print(round(prop.table(table(households_nextyear$nvehicles)),2))
+
 #============= step 10: match new hh to the hh with known veh prediction in the evolution year
 print('match the new hh with existing hh')
 
-demodat = households1
+
+demodat <- households1
 #rm(households1)
 
-demodat = demodat %>%
-  select(matches(c('headpid','tract_geoid',hhmatch_varnames)))
+demodat <- demodat %>%
+  select(matches(c('headpid','tract_geoid',hhmatch_varnames))) %>%
+  mutate(county_id = floor(tract_geoid/1000000))
 
-demodat = demodat %>% drop_na() # get complete cases
+demodat <- demodat %>% drop_na() # get complete cases
 
-cur_hhids = unique(households_nextyear$headpid)
-new_hhids = demodat$headpid[!(demodat$headpid %in% cur_hhids)]
+cur_hhids <- unique(households_nextyear$headpid)
+new_hhids <- demodat$headpid[!(demodat$headpid %in% cur_hhids)]
+
+# # see if tracts of curhhid and newhhid have overlap
+# cur_tracts <- unique(demodat$tract_geoid[demodat$headpid %in% cur_hhids])
+# new_tracts <- unique(demodat$tract_geoid[demodat$headpid %in% new_hhids])
 
 # # parallel code sometimes give errors
-# tic()
-# matched_ids <- matchinghhid_parallel(demodat, Npe = Npe)
-# toc()
-
 tic()
-matched_ids <- matchinghhid(demodat)
+matched_ids <- matchinghhid_parallel(demodat, Npe = Npe)
 toc()
-
+# #profvis({
+# tic()
+# matched_ids <- matchinghhid(demodat)
+# toc()
+# #})
 
 newhh_nextyear <- households_nextyear %>% rename(matched_id=headpid)
 newhh_nextyear <- setnames(merge(newhh_nextyear, matched_ids, by="matched_id"), c("new_hhid"), c("headpid"))[

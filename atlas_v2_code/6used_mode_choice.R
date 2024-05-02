@@ -66,7 +66,7 @@ vehmodeset_clean_used <- function(datainput){
   # other veh charateristics variables
   data <- data %>% mutate(`log(range)` = log(range))
   
-  data <- data %>% mutate(rebate = 0,
+  data <- data %>% mutate(rebate = 0,  # only to initialize the incentive variables without computing them yet
                           tax_credit = 0)
   
   return(data)

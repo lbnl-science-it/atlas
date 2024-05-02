@@ -33,6 +33,8 @@ vehmodepredict <- vehmodepredict[,.(headpid, vehtype, pred_power, adopt_veh, ado
 
 vehicles_nextyear <- rbind(vehicles_thisyear_tmp, vehmodepredict, fill=TRUE)[, by=headpid, vehicle_id:=sequence(.N)]
 rm(vehicles_thisyear_tmp)
+gc()
+
 
 households_nextyear <- merge(vehicles_nextyear[,by=headpid, .(nvehicles=.N)], households_thisyear[,.(headpid)], by="headpid", all.y=T) 
 households_nextyear <- households_nextyear[is.na(nvehicles)==T, nvehicles:=0]

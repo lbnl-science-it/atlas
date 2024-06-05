@@ -1,49 +1,22 @@
 # atlas
 
-Container with R and necessary packages to run BEAM/Atlas vehicle simulation.
 
-v1.0.4 container: ghcr.io/lbnl-science-it/atlas:v1.0.4
+Automobile and Technology Lifecycle-Based Assignment (ATLAS).
+A project from Lawrence Berkeley National Lab - Energy Analysis & Environmental Impacts Division
 
-testing R and libs in the base container image:
-docker run -it --entrypoint=bash ghcr.io/lbnl-science-it/atlas:vBase1.0.4    
+Primary publication about this work:
+
+Technology progress and clean vehicle policies on fleet turnover and equity: insights from household vehicle fleet micro-simulations with ATLAS.
+Transportation Planning and Technology, (2024), 1–24.
+[https://doi.org/10.1080/03081060.2024.2353784]
+Ling Jin,Connor P. Jackson,Yuhan Wang,Qianmiao Chen,Tin Ho,C. Anna Spurlock,Aaron Brooker,Jacob Holden,Jeffrey Gonder,Mohamed Amine Bouzaghraned,Bingrong Sun,Shivam Sharda,Venu Garikapati,Tom Wenzel & Juan Caicedo
 
 
-Example running R script via Docker
------------------------------------
 
-``` bash
+Project source code:
+As of 2024-06-05, the main branch is updated with the last code commit from brannch: sfb-v2, 
+tag: sfb-v2.0.12.
 
-cd /global/data/transportation/ATLAS/static/urbansim/
-
-## R script in home dir, bind mounted to container
-#XX docker run -v /global/data/transportation/ATLAS/static/urbansim:/global/data/transportation/ATLAS/static/urbansim -it --entrypoint=Rscript  ghcr.io/lbnl-science-it/atlas:main  /global/data/transportation/ATLAS/static/urbansim/model_application/Model_application_hima.R 
-docker run -v /global/data/transportation/ATLAS/static/urbansim:/mnt -it --entrypoint=Rscript  ghcr.io/lbnl-science-it/atlas:main  /mnt/model_application/Model_application_hima.R 
-docker run -v /global/data/transportation/ATLAS/static/urbansim_hima_apollo:/mnt -it --entrypoint=Rscript  ghcr.io/lbnl-science-it/atlas:main  /mnt/model_application/Model_application_hima.R 
-docker run -v "$PWD":/mnt -it --entrypoint=Rscript  ghcr.io/lbnl-science-it/atlas:main  /mnt/model_application/Model_application_hima.R
-
-## running a bash shell, can call R from there
-docker run                -it --entrypoint=bash     ghcr.io/lbnl-science-it/atlas:main
-docker run -v /global/data/transportation/ATLAS/static/urbansim_hima_apollo:/mnt -it --entrypoint=bash  ghcr.io/lbnl-science-it/atlas:main  
-    root@0b5815f5b441:/# export R_LIBS=/usr/local/lib/R/site-library/
-    root@0b5815f5b441:/# Rscript /mnt/model_application/Model_application_hima.R
-
-```
-
-Example running R script via Singularity
-----------------------------------------
-
-```
-
-cd /global/data/transportation/ATLAS/static/urbansim/
-
-singularity pull  docker://ghcr.io/lbnl-science-it/atlas:main 
-singularity exec  docker://ghcr.io/lbnl-science-it/atlas:main  Rscript ./model_application/Model_application_hima.R  
-
-// other things to try for debug use
-singularity shell docker://ghcr.io/lbnl-science-it/atlas:main  # get bash prompt, can call R afterward
-singularity run   docker://ghcr.io/lbnl-science-it/atlas:main  # get R    prompt
-
-```
 
 License
 -------

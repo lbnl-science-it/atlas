@@ -11,7 +11,11 @@ if(names(persons)[1] == 'X'){persons = persons %>% rename(person_id = X)}
 
 
 # Accessbility data
-load(file.path(inputdir, "accessbility_2015.RData"))
+if(beamac>0){ # if read from beam
+  job <- read.table(file.path(inputdir, paste0('year',outputyear),paste0("accessibility_",outputyear,"_tract.csv")), header=T, sep=",")
+}else{# else read from observed data
+  load(file.path(inputdir, "accessbility_2015.RData"))
+}
 
 # availability of transit/bus by tract, only used for 2010 parameters
 if(diryear == 2010){tract_access <- read_csv(file.path(inputdir, "modeaccessibility.csv"))}
@@ -95,11 +99,11 @@ households <- households %>% mutate(tract_id= as.numeric(substr(block_id, 1, 10)
 # rent percentage by tract
 residential <- residential %>% mutate(tract_id = as.numeric(substr(block_group_id, 1, 10)))
 if(outputyear == 2010){
+  # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
   perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                               renthouse = sum(tenure=="rent")) %>% mutate(perrent=renthouse/totalhouse * 100)
   
 }else{
-  # update 11.15, building_type_id == 1,2 --> single family owned, multifamily owned
   perrent <- residential %>% group_by(tract_id) %>% summarise(totalhouse = sum(unit_id >0), 
                                                               renthouse = sum(unit_id>0 & building_type_id!=1 & building_type_id!=2)) %>% mutate(perrent=renthouse/totalhouse * 100)
   
@@ -112,7 +116,7 @@ perrent[, c("totalhouse", "renthouse")] <- list(NULL)
 households <- households %>% merge(perrent, by="tract_id")
 rm(perrent)
 
-# Accessbility data
+# Accessbility data # LJ flag, job is the accessibility data and we know the first column is tract GEOID
 names(job)[1] <- "tract_id"
 households <- households %>% merge(job, by="tract_id", all.x=TRUE)
 households$access_zscore[is.na(households$access_zscore)] <- 0
@@ -144,10 +148,13 @@ households <- households %>% mutate(hhage_34=case_when(age_of_head<=34~1, TRUE~0
 ##### generate some variable for later estimation ######
 households$uno <- 1
 households$sero <- 0
-column5 <- names(households[5])
+column5 <- names(households[5]) 
+# LJ flag: this is only to move the uno and sero and id number for later model estimation usage
+# is there a reason why this needs to be here? --> no, but still leave it here for now
+# used for estimation used in old apollo code
 households <- households %>% relocate(uno, .before=all_of(column5))
 households <- households %>% relocate(sero, .after=uno)
-households <- households %>% mutate(id = row_number())
+households <- households %>% mutate(id = row_number()) 
 households <- households %>% relocate(id, .after=sero)
 
 
@@ -160,7 +167,9 @@ households <- households %>% relocate(id, .after=sero)
 # Age
 #table(persons$age)
 persons <- persons %>% filter(age >= 18)
-names(persons)[2] <- "R_AGE_IMP"
+# LJ flag: this will cause problem when the order of variables in person table change
+#names(persons)[2] <- "R_AGE_IMP"
+persons = persons %>% rename(R_AGE_IMP = age)
 # Education
 #table(persons$edu)
 persons <- persons %>% mutate(below_high = case_when(edu <= 15 ~ 1, TRUE~0),

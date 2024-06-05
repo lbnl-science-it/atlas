@@ -94,10 +94,10 @@ RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Atlas v1.0.4 -- Dockerfile.integrationU102 2022.0207.2141 (FROM :integrationU)"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "Atlas v1.0.5 -- Dockerfile.integrationU102 2022.0210.2141 (FROM :integrationU)"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "Grand Finale"
 
-ENV DBG_ATLAS_VER       "Atlas v1.0.4 -- Docker.integrationU102 2022.0207.2141 (FROM :integrationU)"
+ENV DBG_ATLAS_VER       "Atlas v1.0.5 -- Docker.integrationU102 2022.0210.2141 (FROM :integrationU)"
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
 

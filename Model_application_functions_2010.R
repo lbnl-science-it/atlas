@@ -178,7 +178,7 @@ utility_power <- function(names, coefs, data) {
 model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coefs_names, coefs_vehs, 
                               coef_names_type, coef_values_type, coef_names_car, coefs_car,
                               coef_names_van, coefs_van, coef_names_suv, coefs_suv, coef_names_pick, coefs_pick,
-                              coef_names_power, coef_values_power){
+                              coef_names_power, coef_values_power, loopi){
   require(tidyr)
   require(dplyr)
   require(apollo)
@@ -1093,7 +1093,7 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
   }else{
     vehicles <- vehicles %>% group_by(household_id) %>% dplyr::mutate(vehicle_id= 1:n()) %>% ungroup()
     
-    print('now predicting power train')
+    print(paste('now predicting power train at loop',loopi))
     powertrain_model <- function(data, coefs_names, coefs_vehs) {
       
       coefs_name_bev <- c(coefs_names[[1]]);
@@ -1194,7 +1194,7 @@ model_application <- function(persons, data1, coefs_name_mile, coefs_mile , coef
     
     # Updated by Qianmiao 2022.1.12
     # 8. Main driver
-    print('now predicting maindriver')
+    print(paste('now predicting maindriver for loop',loopi))
     
     vehicles$power_ev <-  0
     vehicles$power_ev[vehicles$pred_power!="ICE"] <- 1

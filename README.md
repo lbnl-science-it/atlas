@@ -44,3 +44,9 @@ singularity shell docker://ghcr.io/lbnl-science-it/atlas:main  # get bash prompt
 singularity run   docker://ghcr.io/lbnl-science-it/atlas:main  # get R    prompt
 
 ```
+
+License
+-------
+
+Please see [LICENSE.txt](./LICENSE.txt) for licensing information.
+

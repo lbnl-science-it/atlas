@@ -1,4 +1,13 @@
-# atlas
+Note
+----
+
+This is a development branch.
+For final release of atlas code, please see
+https://github.com/lbnl-science-it/atlas-release
+
+
+Atlas
+---------
 
 Container with R and necessary packages to run BEAM/Atlas vehicle simulation.
 
@@ -44,3 +53,12 @@ singularity shell docker://ghcr.io/lbnl-science-it/atlas:main  # get bash prompt
 singularity run   docker://ghcr.io/lbnl-science-it/atlas:main  # get R    prompt
 
 ```
+
+
+
+
+
+License
+-------
+
+Please see [LICENSE.txt](./LICENSE.txt) for licensing information.

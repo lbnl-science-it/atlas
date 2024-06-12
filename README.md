@@ -1,4 +1,14 @@
-# atlas
+
+Note
+----
+
+This is an internal working development repo.
+For final release of atlas code, please see
+https://github.com/lbnl-science-it/atlas-release
+
+
+Atlas
+---------
 
 
 Automobile and Technology Lifecycle-Based Assignment (ATLAS).

@@ -14,7 +14,8 @@
 
 #FROM r-base:4.1.1      # tidyverse no longer install on 2022.0204: ERROR: dependencies ‘googledrive’, ‘googlesheets4’, ‘httr’, ‘rvest’, ‘xml2’ are not available
 
-FROM debian:bullseye
+##FROM debian:bullseye
+FROM debian:trixie
 
 MAINTAINER Tin (at) LBL.gov
 ARG DEBIAN_FRONTEND=noninteractive
@@ -34,6 +35,14 @@ RUN echo  ''  ;\
     apt-get update ;\
     apt-get -y --quiet install r-base ;\
     cd /    ;\
+    echo ""
+
+RUN echo  ''  ;\
+    adduser atlas     ;\
+    mkdir /atlas      ;\
+    chown atlas. /atlas  ;\
+    mkdir /pub      ;\
+    chmod 777 /pub  ;\
     echo ""
 
 RUN echo  ''  ;\

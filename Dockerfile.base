@@ -55,6 +55,7 @@ RUN echo  ''  ;\
     #apt-get update ;\
     # ubuntu:   # procps provides uptime cmd
     apt-get -y --quiet install git file wget gzip bash less vim procps ;\
+    apt-get -y --quiet install 'r-cran-googledrive' 'r-cran-googlesheets4' 'r-cran-httr' 'r-cran-ragg' 'r-cran-rvest' 'r-cran-xml2' 'r-cran-curl' 'r-cran-gargle' ;\
     apt-get -y --quiet install units libudunits2-dev curl r-cran-rcurl libcurl4 libcurl4-openssl-dev libssl-dev r-cran-httr  r-cran-xml r-cran-xml2 libxml2 rio  java-common javacc javacc4  openjdk-8-jre-headless ;\
     apt-get -y --quiet install openjdk-14-jre-headless   ;\
     # gdal cran install fails, cuz no longer libgdal26, but now libgdal28
@@ -288,7 +289,7 @@ RUN echo ''  ;\
 # add some marker of how Docker was build.
 COPY Dockerfile* /opt/gitrepo/container/
 
-ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2025.1024. Deb13 + fastDummies"
+ENV DBG_ATLAS_BASE_VER  "Dockerfile.base 2025.1024. base13-r450: Deb13 + fastDummies, r-cran-curl"
 ENV DBG_DOCKERFILE Dockerfile.base
 
 RUN  cd / \

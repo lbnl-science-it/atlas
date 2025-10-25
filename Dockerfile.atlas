@@ -20,6 +20,7 @@
 
 # FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4 Debian bullseye (11) R 4.0.4 Rscript works in U16.04 
 FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4
+#++FROM ghcr.io/lbnl-science-it/atlas:base13-r450 # R 4.5.0 Debian 13 Trixie
 
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
 #FROM tin6150/atlas:base
@@ -76,20 +77,21 @@ COPY Dockerfile* /opt/gitrepo/container_layer2/
 COPY . /
 COPY . /opt/gitrepo/atlas/
 
+ENV DBG_ATLAS_CODE_VER "Atlas National v1.0.0-pre -- Docker.atlas 2025.1024 r450"
+ENV DBG_DOCKERFILE Dockerfile.atlas
+ENV TZ America/Los_Angeles 
+
 
 RUN  cd / \
   && touch _TOP_DIR_OF_CONTAINER_  \
   && echo  "--------" >> _TOP_DIR_OF_CONTAINER_   \
   && TZ=PST8PDT date  >> _TOP_DIR_OF_CONTAINER_   \
-  && echo  "Atlas v1.0.4 -- Dockerfile.atlas 2022.0207.2146a d11   r404"     >> _TOP_DIR_OF_CONTAINER_   \
+  && echo  "$DBG_ATLAS_CODE_VER"     >> _TOP_DIR_OF_CONTAINER_   \
   && echo  "cleaned Dockerfile.atlas"             \
   && echo  "Grand Finale Dockerfile.atlas"
 
 
 
-ENV DBG_ATLAS_CODE_VER "Atlas v1.0.4 -- Docker.atlas 2022.0207.2146a d11 r404"
-ENV DBG_DOCKERFILE Dockerfile.atlas
-ENV TZ America/Los_Angeles 
 
 #ENTRYPOINT ["cat", "/_TOP_DIR_OF_CONTAINER_"]
 #ENTRYPOINT [ "/bin/bash" ]

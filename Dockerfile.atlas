@@ -45,6 +45,22 @@ RUN echo  ''  ;\
     cd /    ;\
     echo ""  
 
+# move back to base>>>>
+RUN echo  ''  ;\
+    echo '==================================================================' ;\
+    echo 'adding missing packages (should be done in Dockerfile.base)       ' ;\
+    touch _TOP_DIR_OF_CONTAINER_  ;\
+    echo "         docker build process at " | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    date | tee -a       _TOP_DIR_OF_CONTAINER_ ;\
+    echo "installing packages via apt"       | tee -a _TOP_DIR_OF_CONTAINER_  ;\
+    export TERM=dumb      ;\
+    export NO_COLOR=TRUE  ;\
+    apt-get update ;\
+    # ubuntu:   # procps provides uptime cmd
+    apt-get -y --quiet install 'r-cran-googledrive' 'r-cran-googlesheets4' 'r-cran-httr' 'r-cran-ragg' 'r-cran-rvest' 'r-cran-xml2' 'r-cran-curl' 'r-cran-gargle' ;\
+    echo ""  
+
+
 RUN echo ''  ;\
     echo '==================================================================' ;\
     echo 'capturing container build info                                    ' ;\
@@ -78,7 +94,7 @@ COPY Dockerfile* /opt/gitrepo/container_layer2/
 COPY . /
 COPY . /opt/gitrepo/atlas/
 
-ENV DBG_ATLAS_CODE_VER "Atlas National v1.0.0-pre -- Docker.atlas 2025.1024 r450 baseCurrent" # expect deb13
+ENV DBG_ATLAS_CODE_VER "Atlas National v1.0.0-pre -- Docker.atlas 2025.1024 r450 deb13.1 r-cran-curl,tidyverse" 
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
 

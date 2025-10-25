@@ -19,7 +19,8 @@
 # tin6150/atlas are manual build on centos machine and tag/push to dockerhub.  R works in aws/ubuntu.
 
 # FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4 Debian bullseye (11) R 4.0.4 Rscript works in U16.04 
-FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4
+# FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4
+FROM ghcr.io/lbnl-science-it/atlas:base
 #++FROM ghcr.io/lbnl-science-it/atlas:base13-r450 # R 4.5.0 Debian 13 Trixie  2025.1024
 
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
@@ -77,7 +78,7 @@ COPY Dockerfile* /opt/gitrepo/container_layer2/
 COPY . /
 COPY . /opt/gitrepo/atlas/
 
-ENV DBG_ATLAS_CODE_VER "Atlas National v1.0.0-pre -- Docker.atlas 2025.1024 r450"
+ENV DBG_ATLAS_CODE_VER "Atlas National v1.0.0-pre -- Docker.atlas 2025.1024 r450 baseCurrent" # expect deb13
 ENV DBG_DOCKERFILE Dockerfile.atlas
 ENV TZ America/Los_Angeles 
 

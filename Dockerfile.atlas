@@ -21,7 +21,8 @@
 # FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4 Debian bullseye (11) R 4.0.4 Rscript works in U16.04 
 # FROM ghcr.io/lbnl-science-it/atlas:vBase1.0.4
 #FROM ghcr.io/lbnl-science-it/atlas:base # latest build, before a stable image is tagged.
-FROM ghcr.io/lbnl-science-it/atlas:base13-r450 # R 4.5.0 Debian 13 Trixie  2025.1024
+#FROM ghcr.io/lbnl-science-it/atlas:base13-r450 # R 4.5.0 Debian 13 Trixie  2025.1024. 
+FROM ghcr.io/lbnl-science-it/atlas:base13-r450 
 
 # FROM tin6150/atlas:base   # 2022.0204 is now a "locked r-base:4.1.1 with no apt update, R work on aws/ubuntu 16.04, but unsure about tidyverse (yes on apollo)"
 #FROM tin6150/atlas:base
